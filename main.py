@@ -8,6 +8,14 @@ import numpy as np
 data_path = 'data/'
 
 
+def get_Dataset():
+    train_data_path, test_data_path = get_images_paths()
+    train_data = read_images(train_data_path)
+    test_data = read_images(test_data_path)
+    print(len(train_data))
+    print(len(test_data))
+
+
 def get_images_paths():
     train_images_path = []
     test_images_path = []
@@ -45,10 +53,3 @@ def create_label(image_path):
         if image_label.endswith(image_classes[i]):
             label_encoded[i] = 1
     return label_encoded
-
-
-train_data_path, test_data_path = get_images_paths()
-train_data = read_images(train_data_path)
-test_data = read_images(test_data_path)
-print(len(train_data))
-print(len(test_data))
