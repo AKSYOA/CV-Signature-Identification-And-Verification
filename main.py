@@ -1,14 +1,16 @@
 import tensorflow as tf
+from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow import keras
 import os
 import cv2
+import numpy as np
 
 data_path = 'data/'
 
 
 def get_images_paths():
-    train_data_path = []
-    test_data_path = []
+    train_images_path = []
+    test_images_path = []
 
     for class_folder in os.listdir(data_path):
         for sub_folder in os.listdir(data_path + class_folder):
@@ -19,19 +21,34 @@ def get_images_paths():
                     continue
 
                 if sub_folder == 'Train':
-                    train_data_path.append(image_path)
+                    train_images_path.append(image_path)
                 else:
-                    test_data_path.append(image_path)
+                    test_images_path.append(image_path)
 
-    return train_data_path, test_data_path
+    return train_images_path, test_images_path
 
 
 def read_images(images_paths):
+    images = []
     for i in images_paths:
         image = cv2.imread(i, 0)
-        cv2.imshow("image", image)
-        cv2.waitKey(0)
+        image_label = create_label(i)
+        images.append([np.array(image), image_label])
+    return images
+
+
+def create_label(image_path):
+    image_label = image_path.split('/')[1]
+    image_classes = ['A', 'B', 'C', 'D', 'E']
+    label_encoded = np.zeros((5, 1))
+    for i in range(len(image_classes)):
+        if image_label.endswith(image_classes[i]):
+            label_encoded[i] = 1
+    return label_encoded
 
 
 train_data_path, test_data_path = get_images_paths()
-read_images(train_data_path)
+train_data = read_images(train_data_path)
+test_data = read_images(test_data_path)
+print(len(train_data))
+print(len(test_data))
