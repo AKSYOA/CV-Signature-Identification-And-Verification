@@ -47,10 +47,14 @@ def read_images(images_paths):
     images = []
     for i in images_paths:
         image = cv2.imread(i, 0)
-        image = cv2.resize(image, (227, 227))
+        image = resize_image(image, 227)
         image_label = create_label(i)
         images.append([np.array(image), image_label])
     return images
+
+
+def resize_image(image, image_size):
+    return cv2.resize(image, (image_size, image_size))
 
 
 def create_label(image_path):
