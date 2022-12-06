@@ -26,4 +26,12 @@ def get_images_paths():
     return train_data_path, test_data_path
 
 
-def read_images():
+def read_images(images_paths):
+    for i in images_paths:
+        image = cv2.imread(i, 0)
+        cv2.imshow("image", image)
+        cv2.waitKey(0)
+
+
+train_data_path, test_data_path = get_images_paths()
+read_images(train_data_path)
