@@ -1,6 +1,3 @@
-import tensorflow as tf
-from tensorflow.keras.applications.resnet50 import ResNet50
-from tensorflow import keras
 import os
 import cv2
 import numpy as np
@@ -65,6 +62,3 @@ def create_label(image_path):
         if image_label.endswith(image_classes[i]):
             label_encoded[i] = 1
     return label_encoded
-
-
-get_dataset()
