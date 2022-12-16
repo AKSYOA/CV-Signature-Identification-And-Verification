@@ -2,20 +2,25 @@ import os
 import cv2
 import numpy as np
 from random import shuffle
+from skimage.feature import hog
 
 data_path = '../data/'
 
 
-def get_dataset(image_size):
+def get_dataset(model_type, image_size):
     train_data_path, test_data_path = get_images_paths()
 
-    train_data = read_images(train_data_path, image_size)
-    test_data = read_images(test_data_path, image_size)
+    train_data = read_images(train_data_path, model_type, image_size)
+    test_data = read_images(test_data_path, model_type, image_size)
 
     shuffle(train_data)
 
-    X_train, Y_train = reformat_dataset(train_data, image_size)
-    X_test, Y_test = reformat_dataset(test_data, image_size)
+    if model_type == 'CNN':
+        X_train, Y_train = reformat_dataset(train_data, image_size)
+        X_test, Y_test = reformat_dataset(test_data, image_size)
+    else:
+        X_train, Y_train = generate_hog_features(train_data)
+        X_test, Y_test = generate_hog_features(test_data)
 
     return X_train, Y_train, X_test, Y_test
 
@@ -40,12 +45,12 @@ def get_images_paths():
     return train_images_path, test_images_path
 
 
-def read_images(images_paths, image_size):
+def read_images(images_paths, model_type, image_size):
     images = []
 
     for i in images_paths:
         image = cv2.imread(i, 0)
-        image = resize_image(image, image_size)
+        image = resize_image(image, image_size, model_type)
 
         image_label = create_label(i)
         images.append([np.array(image), image_label])
@@ -53,8 +58,11 @@ def read_images(images_paths, image_size):
     return images
 
 
-def resize_image(image, image_size):
-    return cv2.resize(image, (image_size, image_size))
+def resize_image(image, image_size, model_type):
+    if model_type == 'HOG':
+        return cv2.resize(image, (image_size, 2 * image_size))
+    else:
+        return cv2.resize(image, (image_size, image_size))
 
 
 def create_label(image_path):
@@ -75,3 +83,19 @@ def reformat_dataset(data, image_size):
     Y = Y.reshape(len(Y), 5)
 
     return X, Y
+
+
+def generate_hog_features(data):
+    hog_features = []
+    images_labels = []
+
+    for i in data:
+        print(i[0].shape)
+
+        fd = hog(i[0], orientations=9, pixels_per_cell=(8, 8),
+                 cells_per_block=(2, 2), visualize=False, multichannel=False)
+
+        hog_features.append(fd)
+        images_labels.append(i[1])
+
+    return np.array(hog_features), np.array(images_labels)
