@@ -90,8 +90,6 @@ def generate_hog_features(data):
     images_labels = []
 
     for i in data:
-        print(i[0].shape)
-
         fd = hog(i[0], orientations=9, pixels_per_cell=(8, 8),
                  cells_per_block=(2, 2), visualize=False, multichannel=False)
 
