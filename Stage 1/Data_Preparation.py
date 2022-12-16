@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-data_path = 'data/'
+data_path = '../data/'
 
 
 def get_dataset():
@@ -43,8 +43,8 @@ def get_images_paths():
 def read_images(images_paths):
     images = []
     for i in images_paths:
-        image = cv2.imread(i,0)
-        # image = resize_image(image, 227)
+        image = cv2.imread(i, 0)
+        image = resize_image(image, 227)
         image_label = create_label(i)
         images.append([np.array(image), image_label])
     return images
