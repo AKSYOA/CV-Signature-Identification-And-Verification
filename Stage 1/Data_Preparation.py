@@ -66,7 +66,7 @@ def resize_image(image, image_size, model_type):
 
 
 def create_label(image_path):
-    image_label = image_path.split('/')[1]
+    image_label = image_path.split('/')[2]
     image_classes = ['A', 'B', 'C', 'D', 'E']
     label_encoded = np.zeros((5, 1))
 
@@ -94,6 +94,10 @@ def generate_hog_features(data):
                  cells_per_block=(2, 2), visualize=False, multichannel=False)
 
         hog_features.append(fd)
-        images_labels.append(i[1])
+        images_labels.append(reformat_label(i[1]))
 
     return np.array(hog_features), np.array(images_labels)
+
+
+def reformat_label(image_label):
+    return np.argmax(image_label)
