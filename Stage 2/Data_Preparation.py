@@ -1,9 +1,13 @@
 import os
 import pandas as pd
 import cv2
-
+import numpy as np
 
 data_path = '../data/'
+
+
+def get_dataset(image_size):
+    train_images_path, test_images_path, train_csv_path, test_csv_path = get_images_paths()
 
 
 def get_images_paths():
@@ -32,4 +36,20 @@ def get_images_paths():
     return train_images_path, test_images_path, train_csv_path, test_csv_path
 
 
-path1, path2, csv1, csv2 = get_images_paths()
+def read_images(images_paths, image_size):
+    images = []
+
+    for i in images_paths:
+        image = cv2.imread(i, 0)
+        image = resize_image(image, image_size)
+
+        # image_label = create_label(i)
+        images.append([np.array(image), _])
+
+
+def resize_image(image, image_size):
+    return cv2.resize(image, (image_size, image_size))
+
+
+def create_label(image_path):
+    print('label')
