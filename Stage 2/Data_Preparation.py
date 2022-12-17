@@ -6,8 +6,12 @@ import numpy as np
 data_path = '../data/'
 
 
-def get_dataset(image_size):
+def get_dataset():
     train_images_path, test_images_path, train_csv_path, test_csv_path = get_images_paths()
+    train_images = read_images(train_images_path, train_csv_path)
+    test_images = read_images(test_images_path, test_csv_path)
+
+    return train_images, test_images
 
 
 def get_images_paths():
@@ -36,20 +40,44 @@ def get_images_paths():
     return train_images_path, test_images_path, train_csv_path, test_csv_path
 
 
-def read_images(images_paths, image_size):
+def read_images(images_paths, csv_paths):
+    csv_files = read_csv(csv_paths)
+
     images = []
+    number_of_images = len(images_paths)
 
-    for i in images_paths:
-        image = cv2.imread(i, 0)
-        image = resize_image(image, image_size)
+    for i in range(number_of_images):
+        image = cv2.imread(images_paths[i], 0)
+        image = resize_image(image, 50)
 
-        # image_label = create_label(i)
-        images.append([np.array(image), _])
+        image_name = get_image_name(images_paths[i])
+        image_label = create_label(image_name, csv_files)
+        images.append([np.array(image), image_label, image_name])
+
+    return images
 
 
 def resize_image(image, image_size):
     return cv2.resize(image, (image_size, image_size))
 
 
-def create_label(image_path):
-    print('label')
+def get_image_name(image_path):
+    return image_path.split('\\')[1]
+
+
+def create_label(image_name, csv_files):
+    image_classes = ['A', 'B', 'C', 'D', 'E']
+
+    for i in range(len(image_classes)):
+        if image_name.__contains__(image_classes[i]):
+            label = csv_files[i][csv_files[i]['image_name'] == image_name]['label'].tolist()
+            return label[0]
+
+
+def read_csv(csv_paths):
+    csv_files = []
+
+    for i in csv_paths:
+        dataFrame = pd.read_csv(i)
+        csv_files.append(dataFrame)
+    return csv_files
