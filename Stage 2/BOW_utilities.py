@@ -2,7 +2,7 @@ import Data_Preparation
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
-
+from sklearn.preprocessing import StandardScaler
 
 train_images, test_images = Data_Preparation.get_dataset()
 
@@ -33,17 +33,28 @@ def transform_list(l):
 
 
 def cluster(descriptors_stack):
-    kmeans_object = KMeans(n_clusters=100)
+    kmeans_object = KMeans(n_clusters=20)
     return kmeans_object.fit_predict(descriptors_stack)
 
 
-kps, desc = extract_sift_features(train_images)
+def developVocabulary(n_images, descriptor_list, k_means_result):
+    mega_histogram = np.array([np.zeros(100) for i in range(n_images)])
+    count = 0
+    for i in range(n_images):
+        l = len(descriptor_list[i])
+        for j in range(l):
+            idx = k_means_result[count + j]
+            mega_histogram[i][idx] += 1
+        count += l
+    return mega_histogram
 
-desc = transform_list(desc)
 
-kmeansreturn = cluster(desc)
+def standardize(mega_histogram):
+    scale = StandardScaler().fit(mega_histogram)
+    return scale.transform(mega_histogram)
 
-print(type(kmeansreturn))
-print(len(kmeansreturn))
-print(kmeansreturn)
-print(kmeansreturn.shape)
+
+def train_model(mega_histogram, train_labels):
+    clf = SVC()
+    clf.fit(self.mega_histogram, train_labels)
+    return clf
