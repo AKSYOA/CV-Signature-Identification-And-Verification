@@ -48,7 +48,7 @@ def read_images(images_paths, csv_paths):
 
     for i in range(number_of_images):
         image = cv2.imread(images_paths[i], 0)
-        image = resize_image(image, 50)
+        image = resize_image(image, 128)
 
         image_name = get_image_name(images_paths[i])
         image_label = create_label(image_name, csv_files)
