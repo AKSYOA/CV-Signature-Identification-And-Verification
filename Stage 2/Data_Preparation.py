@@ -71,7 +71,10 @@ def create_label(image_name, csv_files):
     for i in range(len(image_classes)):
         if image_name.__contains__(image_classes[i]):
             label = csv_files[i][csv_files[i]['image_name'] == image_name]['label'].tolist()
-            return label[0]
+            if label[0] == 'forged':
+                return 0
+            else:
+                return 1
 
 
 def read_csv(csv_paths):

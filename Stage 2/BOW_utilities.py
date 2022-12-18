@@ -1,12 +1,29 @@
-from sklearn.svm import SVC
-
 import Data_Preparation
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 train_images, test_images = Data_Preparation.get_dataset()
+
+
+def generate_BOW_model(data):
+    kps, descriptors_list = extract_sift_features(data)
+
+    descriptors_stack = transform_list(descriptors_list)
+
+    k_means_result = cluster(descriptors_stack)
+
+    mega_histogram = developVocabulary(len(data), descriptors_list, k_means_result)
+    print(mega_histogram.shape)
+
+    mega_histogram = standardize(mega_histogram)
+
+    data_labels = get_labels(data)
+    model = train_model(mega_histogram, data_labels)
+
+    return model
 
 
 def extract_sift_features(data):
@@ -60,3 +77,12 @@ def train_model(mega_histogram, train_labels):
     clf = SVC()
     clf.fit(mega_histogram, train_labels)
     return clf
+
+
+def get_labels(data):
+    labels = []
+
+    for i in range(len(data)):
+        labels.append(data[i][1])
+
+    return np.array(labels)
