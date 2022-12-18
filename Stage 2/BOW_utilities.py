@@ -1,11 +1,9 @@
-import Data_Preparation
+from sklearn.linear_model import LogisticRegression
+
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-
-train_images, test_images = Data_Preparation.get_dataset()
 
 
 def generate_BOW_model(data):
@@ -13,17 +11,16 @@ def generate_BOW_model(data):
 
     descriptors_stack = transform_list(descriptors_list)
 
-    k_means_result = cluster(descriptors_stack)
+    k_means_result, k_means_object = cluster(descriptors_stack)
 
     mega_histogram = developVocabulary(len(data), descriptors_list, k_means_result)
-    print(mega_histogram.shape)
 
     mega_histogram = standardize(mega_histogram)
 
     data_labels = get_labels(data)
     model = train_model(mega_histogram, data_labels)
 
-    return model
+    return model, k_means_object
 
 
 def extract_sift_features(data):
@@ -52,8 +49,8 @@ def transform_list(l):
 
 
 def cluster(descriptors_stack):
-    k_means_object = KMeans(n_clusters=20)
-    return k_means_object.fit_predict(descriptors_stack)
+    k_means_object = KMeans(n_clusters=100)
+    return k_means_object.fit_predict(descriptors_stack), k_means_object
 
 
 def developVocabulary(n_images, descriptor_list, k_means_result):
@@ -74,7 +71,7 @@ def standardize(mega_histogram):
 
 
 def train_model(mega_histogram, train_labels):
-    clf = SVC()
+    clf = LogisticRegression()
     clf.fit(mega_histogram, train_labels)
     return clf
 
@@ -86,3 +83,31 @@ def get_labels(data):
         labels.append(data[i][1])
 
     return np.array(labels)
+
+
+def recognize_image(k_means_object, image_descriptors):
+    no_clusters = 100
+    vocabulary = np.array([[0 for i in range(no_clusters)]])
+    vocabulary = np.array(vocabulary, 'float32')
+
+    k_means_result = k_means_object.predict(image_descriptors)
+
+    for each in k_means_result:
+        vocabulary[0][each] += 1
+
+    vocabulary = standardize(vocabulary)
+
+    return vocabulary
+
+
+def test_model(test_data, model, k_means_object):
+    predictions = []
+
+    kps, descriptors_list = extract_sift_features(test_data)
+    for i in range(len(test_data)):
+        vocabulary = recognize_image(k_means_object, descriptors_list[i])
+        label = model.predict(vocabulary)
+        print(label)
+        predictions.append(label)
+
+    return predictions
