@@ -1,3 +1,5 @@
+from sklearn.svm import SVC
+
 import Data_Preparation
 import cv2
 import numpy as np
@@ -34,7 +36,7 @@ def transform_list(l):
 
 def cluster(descriptors_stack):
     k_means_object = KMeans(n_clusters=20)
-    return kmeans_object.fit_predict(descriptors_stack)
+    return k_means_object.fit_predict(descriptors_stack)
 
 
 def developVocabulary(n_images, descriptor_list, k_means_result):
@@ -56,5 +58,5 @@ def standardize(mega_histogram):
 
 def train_model(mega_histogram, train_labels):
     clf = SVC()
-    clf.fit(self.mega_histogram, train_labels)
+    clf.fit(mega_histogram, train_labels)
     return clf
