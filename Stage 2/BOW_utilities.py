@@ -33,7 +33,7 @@ def transform_list(l):
 
 
 def cluster(descriptors_stack):
-    kmeans_object = KMeans(n_clusters=20)
+    k_means_object = KMeans(n_clusters=20)
     return kmeans_object.fit_predict(descriptors_stack)
 
 
