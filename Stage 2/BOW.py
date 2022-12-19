@@ -1,10 +1,9 @@
 from sklearn.metrics import accuracy_score
-import numpy as np
 import Data_Preparation
 import BOW_utilities
 from random import shuffle
 
-train_images, test_images = Data_Preparation.get_dataset('BOW')
+train_images, test_images = Data_Preparation.get_dataset()
 
 
 Classes = ['personA', 'personB', 'personC', 'personD', 'personE']

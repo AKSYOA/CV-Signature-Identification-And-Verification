@@ -2,21 +2,16 @@ import os
 import pandas as pd
 import cv2
 import numpy as np
-import random
+
 data_path = '../data/'
 
 
-def get_dataset(model):
+def get_dataset():
     train_images_path, test_images_path, train_csv_path, test_csv_path = get_images_paths()
     train_images = read_images(train_images_path, train_csv_path)
     test_images = read_images(test_images_path, test_csv_path)
-    if model =='BOW':
 
-        return train_images, test_images
-    else:
-        train_triples= get_triplet(train_images)
-        test_triples = get_triplet(test_images)
-        return  train_triples,test_triples
+    return train_images, test_images
 
 
 def get_images_paths():
@@ -54,6 +49,7 @@ def read_images(images_paths, csv_paths):
     for i in range(number_of_images):
         image = cv2.imread(images_paths[i], 0)
         image = resize_image(image, 128)
+
         image_name = get_image_name(images_paths[i])
         image_label = create_label(image_name, csv_files)
         images.append([np.array(image), image_label, image_name])
@@ -89,27 +85,3 @@ def read_csv(csv_paths):
         csv_files.append(dataFrame)
     return csv_files
 
-
-def get_triplet(images):
-    triplets = []
-    classes = ['A', 'B', 'C', 'D', 'E']
-    for i in range(len(classes)):
-        Class = classes[i]
-        for image in images:
-            if image[2].__contains__(Class):
-                anchor = image[0]
-                label_anchor = image[1]
-                name = image[2]
-
-        for pos in images:
-            if pos[2].__contains__(Class) and label_anchor == pos[1] and name != pos[2]:
-                postive = pos
-                for neg in images:
-                    if neg[2].__contains__(Class) and label_anchor != neg[1]:
-                        negative = neg
-                        # print("anchor", label_anchor, " ", name)
-                        # print("postive", pos[1], " ", pos[2])
-                        # print("negative", neg[1], " ", neg[2], "\n")
-                        triplets.append([anchor, postive, negative])
-                        random.shuffle(triplets)
-    return triplets
