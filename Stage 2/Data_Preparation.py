@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import cv2
 import numpy as np
-
+import random
 data_path = '../data/'
 
 
@@ -14,7 +14,7 @@ def get_dataset(model):
 
         return train_images, test_images
     else:
-        train_triples=get_triplet(train_images)
+        train_triples= get_triplet(train_images)
         test_triples = get_triplet(test_images)
         return  train_triples,test_triples
 
@@ -54,7 +54,6 @@ def read_images(images_paths, csv_paths):
     for i in range(number_of_images):
         image = cv2.imread(images_paths[i], 0)
         image = resize_image(image, 128)
-
         image_name = get_image_name(images_paths[i])
         image_label = create_label(image_name, csv_files)
         images.append([np.array(image), image_label, image_name])
@@ -92,7 +91,7 @@ def read_csv(csv_paths):
 
 
 def get_triplet(images):
-    triples = []
+    triplets = []
     classes = ['A', 'B', 'C', 'D', 'E']
     for i in range(len(classes)):
         Class = classes[i]
@@ -111,5 +110,6 @@ def get_triplet(images):
                         # print("anchor", label_anchor, " ", name)
                         # print("postive", pos[1], " ", pos[2])
                         # print("negative", neg[1], " ", neg[2], "\n")
-                        triples.append([anchor, postive, negative])
-    return triples
+                        triplets.append([anchor, postive, negative])
+                        random.shuffle(triplets)
+    return triplets
