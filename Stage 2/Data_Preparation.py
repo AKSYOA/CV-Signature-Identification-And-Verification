@@ -6,12 +6,17 @@ import numpy as np
 data_path = '../data/'
 
 
-def get_dataset():
+def get_dataset(model):
     train_images_path, test_images_path, train_csv_path, test_csv_path = get_images_paths()
     train_images = read_images(train_images_path, train_csv_path)
     test_images = read_images(test_images_path, test_csv_path)
+    if model =='BOW':
 
-    return train_images, test_images
+        return train_images, test_images
+    else:
+        train_triples=get_triplet(train_images)
+        test_triples = get_triplet(test_images)
+        return  train_triples,test_triples
 
 
 def get_images_paths():
@@ -84,3 +89,27 @@ def read_csv(csv_paths):
         dataFrame = pd.read_csv(i)
         csv_files.append(dataFrame)
     return csv_files
+
+
+def get_triplet(images):
+    triples = []
+    classes = ['A', 'B', 'C', 'D', 'E']
+    for i in range(len(classes)):
+        Class = classes[i]
+        for image in images:
+            if image[2].__contains__(Class):
+                anchor = image[0]
+                label_anchor = image[1]
+                name = image[2]
+
+        for pos in images:
+            if pos[2].__contains__(Class) and label_anchor == pos[1] and name != pos[2]:
+                postive = pos
+                for neg in images:
+                    if neg[2].__contains__(Class) and label_anchor != neg[1]:
+                        negative = neg
+                        # print("anchor", label_anchor, " ", name)
+                        # print("postive", pos[1], " ", pos[2])
+                        # print("negative", neg[1], " ", neg[2], "\n")
+                        triples.append([anchor, postive, negative])
+    return triples
