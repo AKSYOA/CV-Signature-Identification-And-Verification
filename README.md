@@ -2,4 +2,5 @@
 
 
 # Task-List
-- Fix bugs in BOW
+- ~~Fix bugs in BOW~~
+- Optimze hyperparameters in BOW

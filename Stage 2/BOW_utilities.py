@@ -6,14 +6,14 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 
-def generate_BOW_model(data):
+def generate_BOW_model(data, n_clusters):
     kps, descriptors_list = extract_sift_features(data)
 
     descriptors_stack = transform_list(descriptors_list)
 
-    k_means_result, k_means_object = cluster(descriptors_stack)
+    k_means_result, k_means_object = cluster(descriptors_stack, n_clusters)
 
-    mega_histogram = developVocabulary(len(data), descriptors_list, k_means_result)
+    mega_histogram = developVocabulary(len(data), descriptors_list, k_means_result, n_clusters)
 
     mega_histogram = standardize(mega_histogram)
 
@@ -40,21 +40,20 @@ def extract_sift_features(data):
 def transform_list(l):
     vStack = np.array(l[0])
 
-    for i in range(len(l)):
-        if i == 0:
-            continue
-        vStack = np.vstack((vStack, l[i]))
+    for remaining in l[1:]:
+        vStack = np.vstack((vStack, remaining))
 
     return vStack
 
 
-def cluster(descriptors_stack):
-    k_means_object = KMeans(n_clusters=100)
-    return k_means_object.fit_predict(descriptors_stack), k_means_object
+def cluster(descriptors_stack, n_clusters):
+    k_means_object = KMeans(n_clusters=n_clusters)
+    k_means_result = k_means_object.fit_predict(descriptors_stack)
+    return k_means_result, k_means_object
 
 
-def developVocabulary(n_images, descriptor_list, k_means_result):
-    mega_histogram = np.array([np.zeros(100) for i in range(n_images)])
+def developVocabulary(n_images, descriptor_list, k_means_result, n_clusters):
+    mega_histogram = np.array([np.zeros(n_clusters) for i in range(n_images)])
     count = 0
     for i in range(n_images):
         l = len(descriptor_list[i])
@@ -62,12 +61,14 @@ def developVocabulary(n_images, descriptor_list, k_means_result):
             idx = k_means_result[count + j]
             mega_histogram[i][idx] += 1
         count += l
+
     return mega_histogram
 
 
 def standardize(mega_histogram):
     scale = StandardScaler().fit(mega_histogram)
-    return scale.transform(mega_histogram)
+    scale_result = scale.transform(mega_histogram)
+    return scale_result
 
 
 def train_model(mega_histogram, train_labels):
@@ -85,9 +86,8 @@ def get_labels(data):
     return np.array(labels)
 
 
-def recognize_image(k_means_object, image_descriptors):
-    no_clusters = 100
-    vocabulary = np.array([[0 for i in range(no_clusters)]])
+def recognize_image(k_means_object, image_descriptors, n_clusters):
+    vocabulary = np.array([[0 for i in range(n_clusters)]])
     vocabulary = np.array(vocabulary, 'float32')
 
     k_means_result = k_means_object.predict(image_descriptors)
@@ -95,17 +95,15 @@ def recognize_image(k_means_object, image_descriptors):
     for each in k_means_result:
         vocabulary[0][each] += 1
 
-    vocabulary = standardize(vocabulary)
-
     return vocabulary
 
 
-def test_model(test_data, model, k_means_object):
+def test_model(test_data, model, k_means_object, n_clusters):
     predictions = []
 
     kps, descriptors_list = extract_sift_features(test_data)
     for i in range(len(test_data)):
-        vocabulary = recognize_image(k_means_object, descriptors_list[i])
+        vocabulary = recognize_image(k_means_object, descriptors_list[i], n_clusters)
         label = model.predict(vocabulary)
         print(label)
         predictions.append(label)
