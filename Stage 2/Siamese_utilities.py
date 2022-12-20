@@ -35,7 +35,7 @@ def get_triplet(data):
     return triplets
 
 
-def get_batch(triplets_list, batch_size, preprocess=False):
+def get_batch(triplets_list, batch_size):
     batch_steps = len(triplets_list) // batch_size
 
     for i in range(batch_steps + 1):
@@ -52,10 +52,6 @@ def get_batch(triplets_list, batch_size, preprocess=False):
             negatives.append(negative)
             j += 1
 
-        # if preprocess:
-        #     anch = preprocess_input(anchors)
-        #     posit = preprocess_input(positives)
-        #     negat = preprocess_input(negatives)
         anchors = np.array(anchors, dtype=object)
         positives = np.array(positives, dtype=object)
         negatives = np.array(negatives, dtype=object)
@@ -115,6 +111,7 @@ def get_siamese_network(image_size=(128, 128, 3)):
         encoder(negative_input)
     )
 
+    # Model Creation
     siamese_network = Model(
         inputs=[anchor_input, positive_input, negative_input],
         outputs=distances,
