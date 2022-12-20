@@ -12,17 +12,6 @@ from tensorflow import keras
 from tensorflow.keras.models import Model, Sequential
 
 
-def generate_Siamese_model():
-    siamese_network = get_siamese_network()
-    siamese_network.summary()
-
-    siamese_model = SiameseModel(siamese_network)
-    optimizer = Adam(learning_rate=1e-3, epsilon=1e-01)
-    siamese_model.compile(optimizer=optimizer)
-
-    return siamese_model
-
-
 def get_triplet(data):
     triplets = []
     classes = ['A', 'B', 'C', 'D', 'E']
@@ -30,7 +19,7 @@ def get_triplet(data):
         Class = classes[i]
         for image in data:
             if image[2].__contains__(Class):
-                anchor = image
+                anchor = image[0]
                 label_anchor = image[1]
                 name = image[2]
 
@@ -40,58 +29,65 @@ def get_triplet(data):
                 for neg in data:
                     if neg[2].__contains__(Class) and label_anchor != neg[1]:
                         negative = neg
+                        # print("anchor", label_anchor, " ", name)
+                        # print("postive", pos[1], " ", pos[2])
+                        # print("negative", neg[1], " ", neg[2], "\n")
                         triplets.append([anchor, positive, negative])
                         shuffle(triplets)
     return triplets
 
 
-def get_batch(triplets_list, batch_size):
-    batch_steps = len(triplets_list) // batch_size
+def get_batch(triplets_list, batch_size, preprocess=False):
+    batches_count = len(triplets_list) // batch_size
+    triplet_index = 0
+    bateches_counter = 0
 
-    for i in range(batch_steps + 1):
-        anchors = []
-        positives = []
-        negatives = []
-
-        j = i * batch_size  # index of first triplet in the batch
-        while j < (i + 1) * batch_size and j < len(triplets_list):
-            anchor, positive, negative = triplets_list[j]
-
-            anchors.append(anchor[0])
-            positives.append(positive[0])
-            negatives.append(negative[0])
+    while bateches_counter < batches_count:  # no of batches
+        j = bateches_counter * batch_size  # index of first triplet in the batch
+        while j < (bateches_counter + 1) * batch_size and j < len(triplets_list):
+            anchor = []
+            positive = []
+            negative = []
             j += 1
+            anch, posit, negat = triplets_list[triplet_index]
+            triplet_index += 1
+            anch = np.array(anch, dtype=object)
+            posit = np.array(posit, dtype=object)
+            negat = np.array(negat, dtype=object)
+            # if preprocess:
+            #     anch = preprocess_input(anchor)
+            #     posit = preprocess_input(positive)
+            #     negat = preprocess_input(negative)
+            anchor.append(anch)
+            positive.append(posit)
+            negative.append(negat)
+        yield [anchor, positive, negative]
+        # batches[bateches_counter][increment]=triplets_list[triplet_index]
+        bateches_counter += 1
 
-        anchors = np.array(anchors)
-        positives = np.array(positives)
-        negatives = np.array(negatives)
 
-        yield [anchors, positives, negatives]
-
-
-def get_encoder(image_size):
+def cnn_model(image_size):
     pretrained_model = Xception(
         input_shape=image_size,
         weights='imagenet',
         include_top=False,
         pooling='avg',
     )
-    for i in range(len(pretrained_model.layers) - 27):
+    for i in range(len(pretrained_model) - 27):
         pretrained_model.layers[i].trainable = False
-
-        encode_model = Sequential([
+        cnn = Sequential([
             pretrained_model,
-            layers.Flatten(),
-            layers.Dense(512, activation='relu'),
-            layers.BatchNormalization(),
-            layers.Dense(256, activation="relu"),
-            layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))
+            tensorflow.keras.layers.Flatten(),
+            tensorflow.keras.layers.Dense(512, activation='relu'),
+            tensorflow.keras.layers.BatchNormalization(),
+            tensorflow.keras.layers.Dense(256, activation="relu"),
+            tensorflow.keras.layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))
         ], name="Encode_Model")
 
-    return encode_model
+    return cnn
 
 
-class DistanceLayer(layers.Layer):
+class DistanceLayer(layers.Layer):  #######leh 3mltha fe class w eh momizat ani a4t8al b class
     # A layer to compute ‖f(A) - f(P)‖² and ‖f(A) - f(N)‖²
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -102,68 +98,48 @@ class DistanceLayer(layers.Layer):
         return ap_distance, an_distance
 
 
-def get_siamese_network(image_size=(128, 128, 3)):
-    encoder = get_encoder(image_size)
+def get_siamese_network(image_size=(128, 128)):
+    model = cnn_model(image_size)  # make model
+    anchor = tensorflow.keras.layers.Input(input_size=(image_size, image_size), name='anchor')
+    positive = tensorflow.keras.layers.Input(input_size=(image_size, image_size), name='positive')
+    negative = tensorflow.keras.layers.Input(input_size=(image_size, image_size), name='negative')
+    output_anchor = model(anchor)  # inputLayers to model
+    output_positive = model(positive)
+    output_negative = model(negative)
 
-    # Input layers
-    anchor_input = layers.Input(image_size, name='Anchor_Input')
-    positive_input = layers.Input(image_size, name='Positive_Input')
-    negative_input = layers.Input(image_size, name='Negative_Input')
-
-    # Encoded Vectors
-    encoded_anchor = encoder(anchor_input)
-    encoded_positive = encoder(positive_input)
-    encoded_negative = encoder(negative_input)
-
-    distances = DistanceLayer()(
-        encoder(anchor_input),
-        encoder(positive_input),
-        encoder(negative_input)
-    )
-
-    # Model Creation
+    distances = DistanceLayer()(output_anchor, output_positive, output_negative)
     siamese_network = Model(
-        inputs=[anchor_input, positive_input, negative_input],
+        inputs=[anchor, positive, negative],
         outputs=distances,
         name="Siamese_Network"
     )
     return siamese_network
 
 
-class SiameseModel(Model):
-    # Builds a Siamese model based on a base-model
+class siamese_model(Model):
     def __init__(self, siamese_network, margin=1.0):
-        super(SiameseModel, self).__init__()
-
         self.margin = margin
         self.siamese_network = siamese_network
-        self.loss_tracker = metrics.Mean(name="loss")
+        self.error_improver = metrics.Mean(name="loss")
 
-    def call(self, inputs):
-        return self.siamese_network(inputs)
+    def call(self, input):
+        return self.siamese_network(input)
 
-    def train_step(self, data):
-        # GradientTape get the gradients when we compute loss, and uses them to update the weights
-        with tf.GradientTape() as tape:
-            loss = self._compute_loss(data)
+    def get_loss(self, triplets):
+        anchor_positive, anchor_negative = self.siamese_network(triplets)
+        return tf.reduce_sum(max(anchor_positive - anchor_negative + self.margin, 0))
 
-        gradients = tape.gradient(loss, self.siamese_network.trainable_weights)
-        self.optimizer.apply_gradients(zip(gradients, self.siamese_network.trainable_weights))
+    def train(self,train_triplets):
+        with tf.GradientTape as tape:
+            loss = self.get_loss(train_triplets)
+        gradient = tape.gradient(loss,self.siamese_network.trainable_weights) # dloss/dW
+        self.optimizer.apply_gradients(zip(gradient,self.siamese_network.trainable_weights))
+        self.error_improver.update_state(loss)
+        return {"loss": self.error_improver.result()}
 
-        self.loss_tracker.update_state(loss)
-        return {"loss": self.loss_tracker.result()}
-
-    def test_step(self, data):
-        loss = self._compute_loss(data)
-
-        self.loss_tracker.update_state(loss)
-        return {"loss": self.loss_tracker.result()}
-
-    def _compute_loss(self, data):
-        # Get the two distances from the network, then compute the triplet loss
-        ap_distance, an_distance = self.siamese_network(data)
-        loss = tf.maximum(ap_distance - an_distance + self.margin, 0.0)
-        return loss
+    def test(self,test_triplets):
+        loss= self.get_loss(test_triplets)
+        self.error_improver.update_state(loss)
 
     @property
     def metrics(self):
