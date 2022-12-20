@@ -12,7 +12,7 @@ from tensorflow import keras
 from tensorflow.keras.models import Model, Sequential
 
 
-def generate_Siamese_model(train_data, test_data):
+def generate_Siamese_model():
     siamese_network = get_siamese_network()
     siamese_network.summary()
 
