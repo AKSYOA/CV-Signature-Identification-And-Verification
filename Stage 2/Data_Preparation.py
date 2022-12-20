@@ -47,7 +47,8 @@ def read_images(images_paths, csv_paths):
     number_of_images = len(images_paths)
 
     for i in range(number_of_images):
-        image = cv2.imread(images_paths[i], 0)
+        image = cv2.imread(images_paths[i])
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = resize_image(image, 128)
 
         image_name = get_image_name(images_paths[i])
