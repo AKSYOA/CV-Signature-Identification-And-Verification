@@ -5,9 +5,22 @@ from random import shuffle
 
 from tensorflow.keras import backend, layers, metrics
 from keras.applications.xception import Xception
+from tensorflow.keras.optimizers import Adam
+
 from opt_einsum.backends import tensorflow
 from tensorflow import keras
 from tensorflow.keras.models import Model, Sequential
+
+
+def generate_Siamese_model(train_data, test_data):
+    siamese_network = get_siamese_network()
+    siamese_network.summary()
+
+    siamese_model = SiameseModel(siamese_network)
+    optimizer = Adam(learning_rate=1e-3, epsilon=1e-01)
+    siamese_model.compile(optimizer=optimizer)
+
+    return siamese_model
 
 
 def get_triplet(data):
@@ -27,9 +40,6 @@ def get_triplet(data):
                 for neg in data:
                     if neg[2].__contains__(Class) and label_anchor != neg[1]:
                         negative = neg
-                        # print("anchor", label_anchor, " ", name)
-                        # print("postive", pos[1], " ", pos[2])
-                        # print("negative", neg[1], " ", neg[2], "\n")
                         triplets.append([anchor, positive, negative])
                         shuffle(triplets)
     return triplets
@@ -47,14 +57,14 @@ def get_batch(triplets_list, batch_size):
         while j < (i + 1) * batch_size and j < len(triplets_list):
             anchor, positive, negative = triplets_list[j]
 
-            anchors.append(anchor)
-            positives.append(positive)
-            negatives.append(negative)
+            anchors.append(anchor[0])
+            positives.append(positive[0])
+            negatives.append(negative[0])
             j += 1
 
-        anchors = np.array(anchors, dtype=object)
-        positives = np.array(positives, dtype=object)
-        negatives = np.array(negatives, dtype=object)
+        anchors = np.array(anchors)
+        positives = np.array(positives)
+        negatives = np.array(negatives)
 
         yield [anchors, positives, negatives]
 
