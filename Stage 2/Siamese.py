@@ -31,7 +31,7 @@ def printAccuracy(positive_list, negative_list):
 pos_list = np.array([])
 neg_list = np.array([])
 
-for data in get_batch(test_triplets, batch_size=32):
+for data in get_batch(test_triplets, batch_size=30):
     a, p, n = data
     pos_list = np.append(pos_list, classify_images(a, p))
     neg_list = np.append(neg_list, classify_images(a, n))
