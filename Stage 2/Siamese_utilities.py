@@ -1,14 +1,10 @@
-# from tensorflow.keras.applications.inception_v3 import preprocess_input
 import numpy as np
 import tensorflow as tf
 from random import shuffle
 
-from tensorflow.keras import backend, layers, metrics
+from tensorflow.keras import layers, metrics
 from keras.applications.xception import Xception
 from tensorflow.keras.optimizers import Adam
-
-from opt_einsum.backends import tensorflow
-from tensorflow import keras
 from tensorflow.keras.models import Model, Sequential
 
 

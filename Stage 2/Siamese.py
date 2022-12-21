@@ -1,11 +1,6 @@
 import Data_Preparation
 from Siamese_utilities import *
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import seaborn as sns
-import time
-
-import matplotlib.pyplot as plt
-import cv2
 
 train_images, test_images = Data_Preparation.get_dataset()
 train_triplets = get_triplet(train_images)
@@ -18,7 +13,6 @@ encoder.load_weights('../Trained Models/encoder.h5')
 
 
 def classify_images(signature_list1, signature_list2, threshold=1.3):
-    # Getting the encodings for the passed faces
     tensor1 = encoder.predict(signature_list1)
     tensor2 = encoder.predict(signature_list2)
 
@@ -27,7 +21,7 @@ def classify_images(signature_list1, signature_list2, threshold=1.3):
     return prediction
 
 
-def ModelMetrics(positive_list, negative_list):
+def printAccuracy(positive_list, negative_list):
     true = np.array([0] * len(positive_list) + [1] * len(negative_list))
     predictions = np.append(positive_list, negative_list)
 
@@ -43,4 +37,4 @@ for data in get_batch(test_triplets, batch_size=32):
     neg_list = np.append(neg_list, classify_images(a, n))
     break
 
-ModelMetrics(pos_list, neg_list)
+printAccuracy(pos_list, neg_list)
