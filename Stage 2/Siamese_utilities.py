@@ -19,6 +19,8 @@ def generate_Siamese_model():
     siamese_model = SiameseModel(siamese_network)
     optimizer = Adam(learning_rate=1e-3, epsilon=1e-01)
     siamese_model.compile(optimizer=optimizer)
+    siamese_model.build(input_shape=())
+    siamese_model.load_weights('siamese_model-final.h5')
 
     return siamese_model
 
@@ -69,9 +71,9 @@ def get_batch(triplets_list, batch_size):
         yield [anchors, positives, negatives]
 
 
-def get_encoder(image_size):
+def get_encoder(input_shape):
     pretrained_model = Xception(
-        input_shape=image_size,
+        input_shape=input_shape,
         weights='imagenet',
         include_top=False,
         pooling='avg',
@@ -102,13 +104,13 @@ class DistanceLayer(layers.Layer):
         return ap_distance, an_distance
 
 
-def get_siamese_network(image_size=(128, 128, 3)):
-    encoder = get_encoder(image_size)
+def get_siamese_network(input_shape=(128, 128, 3)):
+    encoder = get_encoder(input_shape)
 
     # Input layers
-    anchor_input = layers.Input(image_size, name='Anchor_Input')
-    positive_input = layers.Input(image_size, name='Positive_Input')
-    negative_input = layers.Input(image_size, name='Negative_Input')
+    anchor_input = layers.Input(input_shape, name='Anchor_Input')
+    positive_input = layers.Input(input_shape, name='Positive_Input')
+    negative_input = layers.Input(input_shape, name='Negative_Input')
 
     # Encoded Vectors
     encoded_anchor = encoder(anchor_input)
