@@ -54,10 +54,10 @@ def test_model():
 
 model = buildSequentialModel()
 
-if os.path.exists('../Trained Models/basicModel.h5'):
-    model = keras.models.load_model('../Trained Models/basicModel.h5')
+if os.path.exists('../Trained Models/basic_CNN_Model.h5'):
+    model = keras.models.load_model('../Trained Models/basic_CNN_Model.h5')
 else:
     model.fit(X_train, Y_train, validation_split=0.2, epochs=15)
-    model.save('../Trained Models/basicModel.h5')
+    model.save('../Trained Models/basic_CNN_Model.h5')
 
 test_model()
