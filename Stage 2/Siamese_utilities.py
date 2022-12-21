@@ -20,7 +20,7 @@ def generate_Siamese_model():
     optimizer = Adam(learning_rate=1e-3, epsilon=1e-01)
     siamese_model.compile(optimizer=optimizer)
     siamese_model.build(input_shape=())
-    siamese_model.load_weights('siamese_model-final.h5')
+    siamese_model.load_weights('../Trained Models/Siamese-Model.h5')
 
     return siamese_model
 
