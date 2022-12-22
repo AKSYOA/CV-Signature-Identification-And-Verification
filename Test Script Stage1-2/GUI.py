@@ -16,8 +16,8 @@ imageLabel = Label(image=signatureImage).pack()
 
 def run():
     image = [root.filename]
-    image_label = script.Identify(image, stage1_value.get())
-    print(image_label)
+    person_label = script.Identify(image, stage1_value.get())
+    Label(root, text=person_label).pack()
 
 
 stage1_value = IntVar()

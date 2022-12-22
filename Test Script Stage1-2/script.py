@@ -23,3 +23,8 @@ def Identify(image, model_type):
         model = keras.models.load_model('../Trained Models/basic_CNN_Model.h5')
         imageClass = model.predict(image)
         return personClasses[np.argmax(imageClass)]
+
+
+def Verify():
+    # TO::DO
+    print('Verification')
