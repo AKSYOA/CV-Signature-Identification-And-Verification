@@ -2,7 +2,6 @@ import os
 import cv2
 import numpy as np
 from random import shuffle
-from skimage.feature import hog
 
 data_path = '../data/'
 
@@ -15,14 +14,7 @@ def get_dataset(model_type, image_size):
 
     shuffle(train_data)
 
-    if model_type == 'CNN':
-        X_train, Y_train = reformat_dataset(train_data, image_size)
-        X_test, Y_test = reformat_dataset(test_data, image_size)
-    else:
-        X_train, Y_train = generate_hog_features(train_data)
-        X_test, Y_test = generate_hog_features(test_data)
-
-    return X_train, Y_train, X_test, Y_test
+    return train_data, test_data
 
 
 def get_images_paths():
@@ -77,27 +69,5 @@ def create_label(image_path):
     return label_encoded
 
 
-def reformat_dataset(data, image_size):
-    X = np.array([i[0] for i in data], dtype=object).reshape(-1, image_size, image_size, 1)
-    Y = np.array([i[1] for i in data])
-    Y = Y.reshape(len(Y), 5)
-
-    return X, Y
 
 
-def generate_hog_features(data):
-    hog_features = []
-    images_labels = []
-
-    for i in data:
-        fd = hog(i[0], orientations=9, pixels_per_cell=(8, 8),
-                 cells_per_block=(2, 2), visualize=False, multichannel=False)
-
-        hog_features.append(fd)
-        images_labels.append(reformat_label(i[1]))
-
-    return np.array(hog_features), np.array(images_labels)
-
-
-def reformat_label(image_label):
-    return np.argmax(image_label)

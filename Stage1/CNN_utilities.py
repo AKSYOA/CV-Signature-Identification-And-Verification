@@ -7,9 +7,27 @@ from tensorflow.keras import layers
 import os
 import keras
 
-X_train, Y_train, X_test, Y_test = Data_Preparation.get_dataset(model_type='CNN', image_size=128)
-X_train = np.asarray(X_train).astype(np.float32)
-X_test = np.asarray(X_test).astype(np.float32)
+
+def generate_CNN_model(train_data):
+    X_train, Y_train = reformat_dataset(train_data, image_size=128)
+    model = buildSequentialModel()
+
+    if os.path.exists('../Trained Models/basic_CNN_Model.h5'):
+        model = keras.models.load_model('../Trained Models/basic_CNN_Model.h5')
+    else:
+        model.fit(X_train, Y_train, validation_split=0.2, epochs=15)
+        model.save('../Trained Models/basic_CNN_Model.h5')
+
+    return model
+
+
+def reformat_dataset(data, image_size):
+    X = np.array([i[0] for i in data], dtype=object).reshape(-1, image_size, image_size, 1)
+    Y = np.array([i[1] for i in data])
+    Y = Y.reshape(len(Y), 5)
+
+    X = np.asarray(X).astype(np.float32)
+    return X, Y
 
 
 def buildSequentialModel():
@@ -32,16 +50,8 @@ def buildSequentialModel():
     return model
 
 
-def reformat_labels(y_true, y_test):
-    true = []
-    prediction = []
-    for i in range(len(y_true)):
-        true.append(np.argmax(y_true[i]))
-        prediction.append(np.argmax(y_test[i]))
-    return true, prediction
-
-
-def test_model():
+def test_model(test_data, model):
+    X_test, Y_test = reformat_dataset(test_data, image_size=128)
     predictions = model.predict(X_test)
     y_true, predictions = reformat_labels(Y_test, predictions)
     print("Testing Accuracy: " + str(accuracy_score(y_true, predictions)))
@@ -52,12 +62,10 @@ def test_model():
     plt.show()
 
 
-model = buildSequentialModel()
-
-if os.path.exists('../Trained Models/basic_CNN_Model.h5'):
-    model = keras.models.load_model('../Trained Models/basic_CNN_Model.h5')
-else:
-    model.fit(X_train, Y_train, validation_split=0.2, epochs=15)
-    model.save('../Trained Models/basic_CNN_Model.h5')
-
-test_model()
+def reformat_labels(y_true, y_test):
+    true = []
+    prediction = []
+    for i in range(len(y_true)):
+        true.append(np.argmax(y_true[i]))
+        prediction.append(np.argmax(y_test[i]))
+    return true, prediction
