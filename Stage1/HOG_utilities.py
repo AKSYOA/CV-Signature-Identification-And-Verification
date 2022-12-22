@@ -1,7 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
-import Data_Preparation
 import numpy as np
 from skimage.feature import hog
 from joblib import dump, load
