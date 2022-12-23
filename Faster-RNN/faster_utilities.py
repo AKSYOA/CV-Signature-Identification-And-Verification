@@ -62,6 +62,7 @@ def get_data():
             all_data.append(all_imgs[key])
 
     # all_data[no] = all data of image
+    print(len(all_data))
     return all_data , class_mapping
 
 
@@ -1042,3 +1043,72 @@ class RoiPoolingConv(Layer):
                   'num_rois': self.num_rois}
         base_config = super(RoiPoolingConv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+def apply_regr(x, y, w, h, tx, ty, tw, th):
+    # Apply regression to x, y, w and h
+    try:
+        cx = x + w / 2.
+        cy = y + h / 2.
+        cx1 = tx * w + cx
+        cy1 = ty * h + cy
+        w1 = math.exp(tw) * w
+        h1 = math.exp(th) * h
+        x1 = cx1 - w1 / 2.
+        y1 = cy1 - h1 / 2.
+        x1 = int(round(x1))
+        y1 = int(round(y1))
+        w1 = int(round(w1))
+        h1 = int(round(h1))
+
+        return x1, y1, w1, h1
+
+    except ValueError:
+        return x, y, w, h
+    except OverflowError:
+        return x, y, w, h
+    except Exception as e:
+        print(e)
+        return x, y, w, h
+
+
+def apply_regr_np(X, T):
+    """Apply regression layer to all anchors in one feature map
+
+    Args:
+        X: shape=(4, 18, 25) the current anchor type for all points in the feature map
+        T: regression layer shape=(4, 18, 25)
+
+    Returns:
+        X: regressed position and size for current anchor
+    """
+    try:
+        x = X[0, :, :]
+        y = X[1, :, :]
+        w = X[2, :, :]
+        h = X[3, :, :]
+
+        tx = T[0, :, :]
+        ty = T[1, :, :]
+        tw = T[2, :, :]
+        th = T[3, :, :]
+
+        cx = x + w / 2.
+        cy = y + h / 2.
+        cx1 = tx * w + cx
+        cy1 = ty * h + cy
+
+        w1 = np.exp(tw.astype(np.float64)) * w
+        h1 = np.exp(th.astype(np.float64)) * h
+        x1 = cx1 - w1 / 2.
+        y1 = cy1 - h1 / 2.
+
+        x1 = np.round(x1)
+        y1 = np.round(y1)
+        w1 = np.round(w1)
+        h1 = np.round(h1)
+        return np.stack([x1, y1, w1, h1])
+    except Exception as e:
+        print(e)
+        return X
+

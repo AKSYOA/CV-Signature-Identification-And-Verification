@@ -8,7 +8,7 @@ output_weight_path = 'model_frcnn_vgg.hdf5'#save model weights
 record_path = 'record.csv'
 
 # pre-trained VGG weights for the feature map network
-base_weight_path = 'vgg16_weights.h5'
+base_weight_path = '../../vgg16_weights.h5'
 
 config_output_filename = 'model_vgg_config.pickle'#save the cofigurartion values
 num_rois = 4
@@ -44,13 +44,12 @@ num_anchors = len(C.anchor_box_scales) * len(C.anchor_box_ratios)  # 9
 
 rpn = rpn_layer(shared_layers, num_anchors)#output [rpn classification, rpn regression]
 
-classifier = classifier_layer(shared_layers, roi_input, C.num_rois, nb_classes=2) #################
+classifier = classifier_layer(shared_layers, roi_input, C.num_rois, nb_classes=2)
 
-model_rpn = Model(cnn_input, rpn[:2])###(input,outoput)
+model_rpn = Model(cnn_input, rpn[:2])#(input,outoput)
 model_classifier = Model([cnn_input, roi_input], classifier)
 
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
-#leh 3mlna model_all
 model_all = Model([cnn_input, roi_input], rpn[:2] + classifier)
 
 
@@ -74,7 +73,6 @@ else:
     print('Continue training based on previous trained model')
     print('Loading weights from {}'.format(C.model_path))
 
-    ###############fen al weights bto3 al pretrained w b3mlhom load azai
     model_rpn.load_weights(C.model_path, by_name=True)
     model_classifier.load_weights(C.model_path, by_name=True)
 
@@ -155,7 +153,7 @@ for epoch_num in range(num_epochs):
 
             # R: bboxes (shape=(300,4))
             # Convert rpn layer to roi bboxes
-            #############
+
             R = rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_data_format(), use_regr=True, overlap_thresh=0.7,
                            max_boxes=300)  # ttttakes the predicted 4050 box and decrease them to the 300 boxes with the highest confidence
 
