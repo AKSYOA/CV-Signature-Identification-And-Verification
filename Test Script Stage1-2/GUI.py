@@ -1,7 +1,6 @@
 from tkinter import *
 from tkinter import filedialog
 from PIL import ImageTk, Image
-from joblib import dump, load
 
 import script
 
@@ -15,9 +14,11 @@ imageLabel = Label(image=signatureImage).pack()
 
 
 def run():
-    image = [root.filename]
-    person_label = script.Identify(image, stage1_value.get())
-    Label(root, text=person_label).pack()
+    image_path = [root.filename]
+    identification_label, person_index_class = script.Identify(image_path, stage1_value.get())
+    Label(root, text=identification_label).pack()
+    verification_label = script.Verify(image_path, stage2_value.get(), person_index_class)
+    Label(root, text=verification_label).pack()
 
 
 stage1_value = IntVar()

@@ -1,6 +1,7 @@
-import Data_Preparation
-from Siamese_utilities import *
+from Stage2.Siamese_utilities import *
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from Stage2 import Data_Preparation
+
 
 train_images, test_images = Data_Preparation.get_dataset()
 train_triplets = get_triplet(train_images)

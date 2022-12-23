@@ -1,30 +1,74 @@
+import cv2
 from joblib import load
 from tensorflow import keras
 
 import Stage1.Data_Preparation
 import Stage1.HOG_utilities
-from Stage1.CNN_utilities import buildSequentialModel
+import Stage2.Data_Preparation
+import Stage2.Siamese_utilities
+import Stage1.CNN_utilities
 import numpy as np
+import random
 
-personClasses = ['personA', 'personB', 'personC', 'personD', 'personE']
+person_classes = ['personA', 'personB', 'personC', 'personD', 'personE']
+verification_classes = ['forged', 'real']
 
 
-def Identify(image, model_type):
+def Identify(image_path, model_type):
     if model_type == 1:
-        image = Stage1.Data_Preparation.read_images(image, model_type='HOG', image_size=64)
+        image = Stage1.Data_Preparation.read_images(image_path, model_type='HOG', image_size=64)
         image, _ = Stage1.HOG_utilities.generate_hog_features(image)
         clf = load('../Trained Models/HOG_model.joblib')
         imageClass = clf.predict(image)
-        return personClasses[imageClass[0]]
+        return person_classes[imageClass[0]], imageClass[0]
     else:
-        image = Stage1.Data_Preparation.read_images(image, model_type='CNN', image_size=128)
+        image = Stage1.Data_Preparation.read_images(image_path, model_type='CNN', image_size=128)
         image, _ = Stage1.CNN_utilities.reformat_dataset(image, image_size=128)
-        model = buildSequentialModel()
+        model = Stage1.CNN_utilities.buildSequentialModel()
         model = keras.models.load_model('../Trained Models/basic_CNN_Model.h5')
         imageClass = model.predict(image)
-        return personClasses[np.argmax(imageClass)]
+        return person_classes[np.argmax(imageClass)], np.argmax(imageClass)
 
 
-def Verify():
-    # TO::DO
-    print('Verification')
+def Verify(image_path, model_type, person_class_index):
+    if model_type == 2:
+        prediction = prepare_Siamese_model(image_path, person_class_index)
+        return verification_classes[not prediction[0]]
+    else:
+        print('BOW')
+
+
+def prepare_Siamese_model(image_path, person_class_index):
+    train_images, _ = Stage2.Data_Preparation.get_dataset()
+    train_images.sort(key=lambda a: a[2])
+    train_images.sort(key=lambda a: a[1])
+
+    image = read_image(image_path)
+
+    start = person_class_index * 20
+    end = (person_class_index + 1) * 20
+    r1 = random.randint(start + 100, end + 100)
+
+    positive_image = np.array([train_images[r1][0]])  # real
+
+    encoder = Stage2.Siamese_utilities.get_encoder((128, 128, 3))
+    encoder.load_weights('../Trained Models/encoder.h5')
+
+    tensor1 = encoder.predict(image)
+    tensor2 = encoder.predict(positive_image)
+
+    return classify_images(tensor1, tensor2)
+
+
+def classify_images(tensor1, tensor2, threshold=1.3):
+    distance = np.sum(np.square(tensor1 - tensor2), axis=-1)
+    prediction = np.where(distance <= threshold, 0, 1)
+    return prediction
+
+
+def read_image(image_path):
+    image = cv2.imread(image_path[0])
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (128, 128))
+    image = [image]
+    return np.array(image)
