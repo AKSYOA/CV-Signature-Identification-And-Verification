@@ -21,7 +21,6 @@ from sklearn.metrics import average_precision_score
 import keras
 import tensorflow as tf
 from keras import backend as K
-from keras.optimizers import Adam, SGD, RMSprop
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, Dropout
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D, TimeDistributed
 from keras.utils import layer_utils
@@ -32,14 +31,13 @@ from keras.utils import generic_utils
 from keras import initializers, regularizers
 import Data_Preparation as dp
 
-
-train_images, train_boxs, test_images, test_boxs = dp.get_dataset()
+train_images, train_boxes, test_images, test_boxes = dp.get_dataset()
 
 
 def get_data():
     all_imgs = {}
 
-    for i in range(len(train_images)): #0 name ,1 image
+    for i in range(len(train_images)):  # 0 name ,1 image
 
         all_imgs[train_images[i][0]] = {}
         (rows, cols) = train_images[i][1].shape[:2]
@@ -47,8 +45,8 @@ def get_data():
         all_imgs[train_images[i][0]]['width'] = cols
         all_imgs[train_images[i][0]]['height'] = rows
         all_imgs[train_images[i][0]]['bboxes'] = []
-        for j in range(len(train_boxs[i])):
-            value = train_boxs[i][j].strip().split(',')
+        for j in range(len(train_boxes[i])):
+            value = train_boxes[i][j].strip().split(',')
             all_imgs[train_images[i][0]]['bboxes'].append(
                 {'x1': int(value[0]), 'x2': int(value[1]), 'y1': int(value[2]), 'y2': int(value[3])})
         all_data = []
@@ -56,7 +54,7 @@ def get_data():
         for key in all_imgs:
             all_data.append(all_imgs[key])
 
-    #all_data[no] = all data of image
+    # all_data[no] = all data of image
     return all_data
 
 
@@ -91,10 +89,10 @@ class Config:
         self.img_scaling_factor = 1.0
 
         # number of ROIs at once
-        self.num_rois = 4 ##?
+        self.num_rois = 4  ##?
 
         # stride at the RPN (this depends on the network configuration)
-        self.rpn_stride = 16 ##?
+        self.rpn_stride = 16  ##?
 
         self.balanced_classes = False
 
@@ -114,9 +112,8 @@ class Config:
         self.class_mapping = None
 
         self.model_path = None
-x=get_data()
+
+
+x = get_data()
 
 print(x[7])
-
-
-
