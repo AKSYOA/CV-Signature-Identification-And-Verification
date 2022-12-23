@@ -56,17 +56,17 @@ def resize_image(image, image_size):
 
 
 def get_boxes_dimensions(path):
-    dimension_imgs = []
+    dimension_images = []
     for i in os.listdir(path[0]):
         text_file = open(os.path.join(path[0], i), "r")
         print(i)
         Lines = text_file.readlines()
-        dimension_boxs = []
+        dimension_boxes = []
         for j in Lines:
             print(i, " ", j)
-            dimension_boxs.append(j)
-        dimension_imgs.append(dimension_boxs)
-    return dimension_imgs
+            dimension_boxes.append(j)
+        dimension_images.append(dimension_boxes)
+    return dimension_images
 # dim[name][0][]
 # []
 # [
