@@ -1,8 +1,11 @@
 import pandas as pd
 import os
+
+from keras.optimizer_v1 import Adam
+
 from faster_utilities import *
 
-output_weight_path = 'model_frcnn_vgg.hdf5'#save model weights
+output_weight_path = 'model_frcnn_vgg.hdf5'  # save model weights
 
 # Record data (used to save the losses, classification accuracy and mean average precision)
 record_path = 'record.csv'
@@ -10,13 +13,12 @@ record_path = 'record.csv'
 # pre-trained VGG weights for the feature map network
 base_weight_path = '../../vgg16_weights.h5'
 
-config_output_filename = 'model_vgg_config.pickle'#save the cofigurartion values
+config_output_filename = 'model_vgg_config.pickle'  # save the cofigurartion values
 num_rois = 4
 
-train_imgs , class_mapping = get_data()
+train_imgs, class_mapping = get_data()
 
 C = Config()
-
 
 C.use_horizontal_flips = True
 C.use_vertical_flips = True
@@ -34,24 +36,23 @@ random.shuffle(train_imgs)
 
 data_gen_train = get_anchor_gt(train_imgs, C, get_img_output_length, mode='train')
 
-input_shape=(None,None,3)
-cnn_input= Input(shape=input_shape)
-roi_input= Input(shape=(None,4))
+input_shape = (None, None, 3)
+cnn_input = Input(shape=input_shape)
+roi_input = Input(shape=(None, 4))
 
-shared_layers = nn_base(input_shape,trainable=True)
+shared_layers = nn_base(cnn_input, trainable=True)
 
 num_anchors = len(C.anchor_box_scales) * len(C.anchor_box_ratios)  # 9
 
-rpn = rpn_layer(shared_layers, num_anchors)#output [rpn classification, rpn regression]
+rpn = rpn_layer(shared_layers, num_anchors)  # output [rpn classification, rpn regression]
 
 classifier = classifier_layer(shared_layers, roi_input, C.num_rois, nb_classes=2)
 
-model_rpn = Model(cnn_input, rpn[:2])#(input,outoput)
+model_rpn = Model(cnn_input, rpn[:2])  # (input,outoput)
 model_classifier = Model([cnn_input, roi_input], classifier)
 
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
 model_all = Model([cnn_input, roi_input], rpn[:2] + classifier)
-
 
 if not os.path.isfile(C.model_path):
 
@@ -100,15 +101,13 @@ model_classifier.compile(optimizer=optimizer_classifier, loss=[class_loss_cls, c
 
 model_all.compile(optimizer='sgd', loss='mae')
 
-
-
 # Training setting
 total_epochs = len(record_df)
 r_epochs = len(record_df)
 
 epoch_length = 1000
 num_epochs = 3
-iter_num = 0 #counter
+iter_num = 0  # counter
 
 total_epochs += num_epochs
 
@@ -137,7 +136,8 @@ for epoch_num in range(num_epochs):
             if len(rpn_accuracy_rpn_monitor) == epoch_length and C.verbose:
                 mean_overlapping_bboxes = float(sum(rpn_accuracy_rpn_monitor)) / len(rpn_accuracy_rpn_monitor)
                 rpn_accuracy_rpn_monitor = []
-                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(mean_overlapping_bboxes, epoch_length))
+                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(
+                    mean_overlapping_bboxes, epoch_length))
                 if mean_overlapping_bboxes == 0:
                     print(
                         'RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
@@ -289,20 +289,3 @@ for epoch_num in range(num_epochs):
             continue
 
     print('Training complete, exiting.')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

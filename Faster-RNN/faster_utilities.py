@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 import warnings
 
+from keras.engine.base_layer import Layer
+
 warnings.filterwarnings("ignore")
 
 import random
@@ -21,49 +23,46 @@ from sklearn.metrics import average_precision_score
 import keras
 import tensorflow as tf
 from keras import backend as K
-from keras.optimizers import Adam, SGD, RMSprop
+from keras.optimizer_v1 import Adam, SGD, RMSprop
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, Dropout
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D, TimeDistributed
-from keras.engine.topology import get_source_inputs
 from keras.utils import layer_utils
 from keras.utils.data_utils import get_file
-from keras.objectives import categorical_crossentropy
+from keras.losses import categorical_crossentropy
 
 from keras.models import Model
 from keras.utils import generic_utils
-from keras.engine import Layer, InputSpec
+from tensorflow.keras.layers import InputSpec
 from keras import initializers, regularizers
 from Data_Preparation import get_dataset
 
-train_images, train_boxs, test_images, test_boxs = get_dataset()
+train_images, train_boxes, test_images, test_boxes = get_dataset()
 
 
 def get_data():
-    all_imgs = {}
-    class_mapping = {}
+    all_images = {}
+    class_mapping = {'bg': 0, 'obj': 1}
 
-    class_mapping['bg'] = 0
-    class_mapping['obj'] = 1
     for i in range(len(train_images)):  # 0 name ,1 image
 
-        all_imgs[train_images[i][0]] = {}
+        all_images[train_images[i][0]] = {}
         (rows, cols) = train_images[i][1].shape[:2]
-        all_imgs[train_images[i][0]]['file_name'] = train_images[i][0]
-        all_imgs[train_images[i][0]]['width'] = cols
-        all_imgs[train_images[i][0]]['height'] = rows
-        all_imgs[train_images[i][0]]['bboxes'] = []
-        for j in range(len(train_boxs[i])):
-            value = train_boxs[i][j].strip().split(',')
-            all_imgs[train_images[i][0]]['bboxes'].append(
-                {'class': 'obj','x1': int(value[0]), 'x2': int(value[1]), 'y1': int(value[2]), 'y2': int(value[3])})
+        all_images[train_images[i][0]]['file_name'] = train_images[i][0]
+        all_images[train_images[i][0]]['width'] = cols
+        all_images[train_images[i][0]]['height'] = rows
+        all_images[train_images[i][0]]['bboxes'] = []
+        for j in range(len(train_boxes[i])):
+            value = train_boxes[i][j].strip().split(',')
+            all_images[train_images[i][0]]['bboxes'].append(
+                {'class': 'obj', 'x1': int(value[0]), 'x2': int(value[1]), 'y1': int(value[2]), 'y2': int(value[3])})
         all_data = []
 
-        for key in all_imgs:
-            all_data.append(all_imgs[key])
+        for key in all_images:
+            all_data.append(all_images[key])
 
     # all_data[no] = all data of image
     print(len(all_data))
-    return all_data , class_mapping
+    return all_data, class_mapping
 
 
 def get_anchor_gt(all_img_data, C, img_length_calc_function, mode='train'):  # da5el a3ml augment lw ana train
@@ -1111,4 +1110,3 @@ def apply_regr_np(X, T):
     except Exception as e:
         print(e)
         return X
-
