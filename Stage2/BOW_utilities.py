@@ -105,7 +105,6 @@ def test_model(test_data, model, k_means_object, n_clusters):
     for i in range(len(test_data)):
         vocabulary = recognize_image(k_means_object, descriptors_list[i], n_clusters)
         label = model.predict(vocabulary)
-        print(label)
         predictions.append(label)
 
     return predictions

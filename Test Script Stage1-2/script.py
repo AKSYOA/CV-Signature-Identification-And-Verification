@@ -1,11 +1,11 @@
 import cv2
 from joblib import load
 from tensorflow import keras
-
 import Stage1.Data_Preparation
 import Stage1.HOG_utilities
 import Stage2.Data_Preparation
 import Stage2.Siamese_utilities
+import Stage2.BOW_utilities
 import Stage1.CNN_utilities
 import numpy as np
 import random
@@ -35,7 +35,14 @@ def Verify(image_path, model_type, person_class_index):
         prediction = prepare_Siamese_model(image_path, person_class_index)
         return verification_classes[not prediction[0]]
     else:
-        print('BOW')
+        image = read_image(image_path)
+        image = np.expand_dims(image, axis=1)
+        model_path = "../Trained Models/BOW_{person}_model.joblib".format(person=person_classes[person_class_index])
+        k_means_path = "../Trained Models/BOW_{person}_k_means.joblib".format(person=person_classes[person_class_index])
+        model = load(model_path)
+        k_means_object = load(k_means_path)
+        prediction = Stage2.BOW_utilities.test_model(image, model, k_means_object, 300)
+        return verification_classes[prediction[0][0]]
 
 
 def prepare_Siamese_model(image_path, person_class_index):
