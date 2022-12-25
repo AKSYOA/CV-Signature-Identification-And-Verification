@@ -5,6 +5,9 @@ import numpy as np
 from tensorflow.keras import layers
 import os
 import keras
+import cv2
+
+image_Classes = ['PersonA', 'PersonB', 'PersonC', 'PersonD', 'PersonE']
 
 
 def generate_CNN_model(train_data):
@@ -49,7 +52,7 @@ def buildSequentialModel():
     return model
 
 
-def test_model(test_data, model):
+def test_model(test_data, model, visualise=False):
     X_test, Y_test = reformat_dataset(test_data, image_size=128)
     predictions = model.predict(X_test)
     y_true, predictions = reformat_labels(Y_test, predictions)
@@ -59,6 +62,16 @@ def test_model(test_data, model):
     disp = ConfusionMatrixDisplay(confusion_matrix=matrix)
     disp.plot()
     plt.show()
+
+    if visualise:
+        Visualise_data(test_data, predictions)
+
+
+def Visualise_data(data, predictions):
+    for i in range(len(data)):
+        plt.imshow(cv2.cvtColor(data[i][0], cv2.COLOR_BGR2RGB))
+        plt.title("Prediction is " + str(image_Classes[predictions[i]]))
+        plt.show()
 
 
 def reformat_labels(y_true, y_test):

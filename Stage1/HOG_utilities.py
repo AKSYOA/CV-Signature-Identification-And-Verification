@@ -5,6 +5,9 @@ import numpy as np
 from skimage.feature import hog
 from joblib import dump, load
 import os
+import cv2
+
+image_Classes = ['PersonA', 'PersonB', 'PersonC', 'PersonD', 'PersonE']
 
 
 def generate_HOG_model(train_data):
@@ -37,7 +40,7 @@ def reformat_label(image_label):
     return np.argmax(image_label)
 
 
-def testModel(test_data, clf):
+def testModel(test_data, clf, visualise=False):
     X_test, Y_test = generate_hog_features(test_data)
     predictions = clf.predict(X_test)
 
@@ -48,3 +51,13 @@ def testModel(test_data, clf):
     disp = ConfusionMatrixDisplay(confusion_matrix=matrix)
     disp.plot()
     plt.show()
+
+    if visualise:
+        Visualise_data(test_data, predictions)
+
+
+def Visualise_data(data, predictions):
+    for i in range(len(data)):
+        plt.imshow(cv2.cvtColor(data[i][0], cv2.COLOR_BGR2RGB))
+        plt.title("Prediction is " + str(image_Classes[predictions[i]]))
+        plt.show()
