@@ -1,7 +1,9 @@
 from sklearn.metrics import accuracy_score
 import Data_Preparation
 import BOW_utilities
-from random import shuffle
+import os
+from joblib import dump, load
+
 
 train_images, test_images = Data_Preparation.get_dataset()
 
@@ -18,7 +20,14 @@ for i in range(5):
     train = train_images[i * number_train_images: (i + 1) * number_train_images]
     test = test_images[i * number_test_images: (i + 1) * number_test_images]
 
-    model, k_means_object = BOW_utilities.generate_BOW_model(train, n_clusters)
+    model_path = "../Trained Models/BOW_{person}_model.joblib".format(person=Classes[i])
+    k_means_path = "../Trained Models/BOW_{person}_k_means.joblib".format(person=Classes[i])
+
+    if os.path.exists(model_path):
+        model = load(model_path)
+        k_means_object = load(k_means_path)
+    else:
+        model, k_means_object = BOW_utilities.generate_BOW_model(train, n_clusters)
 
     Y_test = BOW_utilities.get_labels(test)
 
