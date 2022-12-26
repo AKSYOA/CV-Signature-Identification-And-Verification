@@ -21,7 +21,8 @@ def Identify(image_path, model_type):
         clf = load('../Trained Models/HOG_model.joblib')
         imageClass = clf.predict(image)
         return person_classes[imageClass[0]], imageClass[0]
-    else:
+
+    elif model_type == 2:
         image = Stage1.Data_Preparation.read_images(image_path, model_type='CNN', image_size=128)
         image, _ = Stage1.CNN_utilities.reformat_dataset(image, image_size=128)
         model = Stage1.CNN_utilities.buildSequentialModel()
@@ -29,12 +30,12 @@ def Identify(image_path, model_type):
         imageClass = model.predict(image)
         return person_classes[np.argmax(imageClass)], np.argmax(imageClass)
 
-
-def Verify(image_path, model_type, person_class_index):
-    if model_type == 2:
-        prediction = prepare_Siamese_model(image_path, person_class_index)
-        return verification_classes[not prediction[0]]
     else:
+        print("enter valid option")
+
+
+def Verify(image_path, model_type, person_class_index, second_image_path):
+    if model_type == 1:
         image = read_image(image_path)
         image = np.expand_dims(image, axis=1)
         model_path = "../Trained Models/BOW_{person}_model.joblib".format(person=person_classes[person_class_index])
@@ -44,25 +45,33 @@ def Verify(image_path, model_type, person_class_index):
         prediction = Stage2.BOW_utilities.test_model(image, model, k_means_object, 300)
         return verification_classes[prediction[0][0]]
 
+    elif model_type == 2:
+        prediction = prepare_Siamese_model(image_path, person_class_index, second_image_path)
+        return verification_classes[not prediction[0]]
 
-def prepare_Siamese_model(image_path, person_class_index):
-    train_images, _ = Stage2.Data_Preparation.get_dataset()
-    train_images.sort(key=lambda a: a[2])
-    train_images.sort(key=lambda a: a[1])
+    else:
+        print("Enter valid option")
+
+
+def prepare_Siamese_model(image_path, person_class_index, second_image_path):
+    # train_images, _ = Stage2.Data_Preparation.get_dataset()
+    # train_images.sort(key=lambda a: a[2])
+    # train_images.sort(key=lambda a: a[1])
 
     image = read_image(image_path)
+    second_image = read_image(second_image_path)
 
-    start = person_class_index * 20
-    end = (person_class_index + 1) * 20
-    r1 = random.randint(start + 100, end + 100)
+    # start = person_class_index * 20
+    # end = (person_class_index + 1) * 20
+    # r1 = random.randint(start + 100, end + 100)
 
-    positive_image = np.array([train_images[r1][0]])  # real
+    # positive_image = np.array([train_images[r1][0]])  # real
 
     encoder = Stage2.Siamese_utilities.get_encoder((128, 128, 3))
     encoder.load_weights('../Trained Models/encoder.h5')
 
     tensor1 = encoder.predict(image)
-    tensor2 = encoder.predict(positive_image)
+    tensor2 = encoder.predict(second_image)
 
     return classify_images(tensor1, tensor2)
 

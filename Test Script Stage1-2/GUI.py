@@ -18,7 +18,13 @@ def run():
     image_path = [root.filename]
     identification_label, person_index_class = script.Identify(image_path, stage1_value.get())
     Label(root, text=identification_label, background='white').pack()
-    verification_label = script.Verify(image_path, stage2_value.get(), person_index_class)
+    if stage2_value.get() == 2:
+        second_image_path = filedialog.askopenfilename(title="Select a file")
+        second_image_path = [second_image_path]
+        verification_label = script.Verify(image_path, stage2_value.get(), person_index_class, second_image_path)
+    else:
+        verification_label = script.Verify(image_path, stage2_value.get(), person_index_class, None)
+
     Label(root, text=verification_label, background='white').pack()
 
 
