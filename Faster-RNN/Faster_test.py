@@ -5,10 +5,11 @@ import os
 from matplotlib import pyplot as plt
 import pandas as pd
 from faster_utilities import *
+from Faster_train import test_link
 
 config_output_filename = 'model_vgg_config.pickle'
 with open(config_output_filename, 'rb') as f_in:
-	C = pickle.load(f_in)
+    C = pickle.load(f_in)
 
 # turn off any data augmentation at test time
 C.use_horizontal_flips = False
@@ -20,42 +21,42 @@ record_df = pd.read_csv(C.record_path)
 
 r_epochs = len(record_df)
 
-plt.figure(figsize=(15,5))
-plt.subplot(1,2,1)
+plt.figure(figsize=(15, 5))
+plt.subplot(1, 2, 1)
 plt.plot(np.arange(0, r_epochs), record_df['mean_overlapping_bboxes'], 'r')
 plt.title('mean_overlapping_bboxes')
 
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.plot(np.arange(0, r_epochs), record_df['class_acc'], 'r')
 plt.title('class_acc')
 
 plt.show()
 
-plt.figure(figsize=(15,5))
+plt.figure(figsize=(15, 5))
 
-plt.subplot(1,2,1)
+plt.subplot(1, 2, 1)
 plt.plot(np.arange(0, r_epochs), record_df['loss_rpn_cls'], 'r')
 plt.title('loss_rpn_cls')
 
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.plot(np.arange(0, r_epochs), record_df['loss_rpn_regr'], 'r')
 plt.title('loss_rpn_regr')
 plt.show()
-plt.figure(figsize=(15,5))
-plt.subplot(1,2,1)
+plt.figure(figsize=(15, 5))
+plt.subplot(1, 2, 1)
 plt.plot(np.arange(0, r_epochs), record_df['loss_class_cls'], 'r')
 plt.title('loss_class_cls')
 
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.plot(np.arange(0, r_epochs), record_df['loss_class_regr'], 'r')
 plt.title('loss_class_regr')
 plt.show()
-plt.figure(figsize=(15,5))
-plt.subplot(1,2,1)
+plt.figure(figsize=(15, 5))
+plt.subplot(1, 2, 1)
 plt.plot(np.arange(0, r_epochs), record_df['curr_loss'], 'r')
 plt.title('total_loss')
 
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.plot(np.arange(0, r_epochs), record_df['elapsed_time'], 'r')
 plt.title('elapsed_time')
 
@@ -108,6 +109,7 @@ def get_real_coordinates(ratio, x1, y1, x2, y2):
 
     return (real_x1, real_y1, real_x2, real_y2)
 
+
 num_features = 512
 
 input_shape_img = (None, None, 3)
@@ -143,12 +145,12 @@ class_mapping = {v: k for k, v in class_mapping.items()}
 print(class_mapping)
 class_to_color = {class_mapping[v]: np.random.randint(0, 255, 3) for v in class_mapping}
 
-test_imgs = os.listdir('images/')
+test_imgs = os.listdir(test_link)
 
 imgs_path = []
 for i in range(12):
-	idx = np.random.randint(len(test_imgs))
-	imgs_path.append(test_imgs[idx])
+    idx = np.random.randint(len(test_imgs))
+    imgs_path.append(test_imgs[idx])
 
 all_imgs = []
 
@@ -162,7 +164,7 @@ for idx, img_name in enumerate(imgs_path):
         continue
     print(img_name)
     st = time.time()
-    filepath = 'images/' + img_name
+    filepath = test_link + '/' + img_name
 
     img = cv2.imread(filepath)
 
@@ -227,7 +229,7 @@ for idx, img_name in enumerate(imgs_path):
     for key in bboxes:
         bbox = np.array(bboxes[key])
 
-        new_boxes, new_probs = non_max_suppression_fast(bbox, np.array(probs[key]), overlap_thresh=0.2)
+        new_boxes, new_probs = non_max_suppression_fast(bbox, np.array(probs[key]), overlap_thresh=0.5)
         for jk in range(new_boxes.shape[0]):
             (x1, y1, x2, y2) = new_boxes[jk, :]
 
