@@ -1,61 +1,102 @@
 import pandas as pd
 import os
-
-from keras.optimizer_v1 import Adam
-
 from faster_utilities import *
+from Data_Preparation import get_data_csvfile
 
-output_weight_path = 'model_frcnn_vgg.hdf5'  # save model weights
+
+body_data = np.random.randint(10, size=(1280, 100))
+print(body_data.shape)
+
+train_path = 'train_data.csv'  # Training data (annotation file)
+train_link ,test_link= get_data_csvfile()
+
+# Number of RoIs to process at once.
+num_rois = 4
+# Augmentation flag
+horizontal_flips = True  # Augment with horizontal flips in training.
+vertical_flips = True  # Augment with vertical flips in training.
+rot_90 = True  # Augment with 90 degree rotations in training.
+
+output_weight_path = 'model_frcnn_vgg.hdf5'#save model weights
 
 # Record data (used to save the losses, classification accuracy and mean average precision)
 record_path = 'record.csv'
 
 # pre-trained VGG weights for the feature map network
-base_weight_path = '../../vgg16_weights.h5'
+base_weight_path = 'vgg16_weights.h5'
 
-config_output_filename = 'model_vgg_config.pickle'  # save the cofigurartion values
-num_rois = 4
+config_output_filename = 'model_vgg_config.pickle'#save the cofigurartion values
 
-train_imgs, class_mapping = get_data()
+# Create the config
+C = Config() #####3bara 3n eh
 
-C = Config()
-
-C.use_horizontal_flips = True
-C.use_vertical_flips = True
-C.rot_90 = True
+# settings for image augmentation
+C.use_horizontal_flips = horizontal_flips
+C.use_vertical_flips = vertical_flips
+C.rot_90 = rot_90
 
 C.record_path = record_path
 C.model_path = output_weight_path
-C.num_rois = num_rois
+C.num_rois = num_rois  #???????????????????????????
 C.base_net_weights = base_weight_path
+
+st = time.time()
+train_imgs, classes_count, class_mapping = get_data(train_path,train_link)#(imgs in dict )
+
+print()
+print('Spend %0.2f mins to load the data' % ((time.time() - st) / 60))
+
+if 'bg' not in classes_count:
+    classes_count['bg'] = 0
+    class_mapping['bg'] = len(class_mapping)
 
 C.class_mapping = class_mapping
 
+print('Training images per class:')
+pprint.pprint(classes_count)
+print('Num classes (including bg) = {}'.format(len(classes_count)))
+print(class_mapping)
+
+# Save the configuration
+with open(config_output_filename, 'wb') as config_f: ##########m4 fahm
+    pickle.dump(C, config_f)
+    print('Config has been written to {}, and can be loaded when testing to ensure correct results'.format(
+        config_output_filename))
+
+# Shuffle the images with seed
 random.seed(1)
 random.shuffle(train_imgs)
 
-data_gen_train = get_anchor_gt(train_imgs, C, get_img_output_length, mode='train')
+print('Num train samples (images) {}'.format(len(train_imgs)))
+data_gen_train = get_anchor_gt(train_imgs, C, get_img_output_length, mode='train')##bi3ml eh
 
-input_shape = (None, None, 3)
-cnn_input = Input(shape=input_shape)
+visualize_data_gen_train(data_gen_train, C)###bi3ml eh
+
+input_shape_img = (None, None, 3)
+
+img_input = Input(shape=input_shape_img)
 roi_input = Input(shape=(None, 4))
 
-shared_layers = nn_base(cnn_input, trainable=True)
+# define the base network (VGG here, can be Resnet50, Inception, etc)
+shared_layers = nn_base(img_input, trainable=True) ####shared_layers = feature map ????????
 
+# define the RPN, built on the base layers
 num_anchors = len(C.anchor_box_scales) * len(C.anchor_box_ratios)  # 9
+rpn = rpn_layer(shared_layers, num_anchors)# output [rpn classification, rpn regression ]
 
-rpn = rpn_layer(shared_layers, num_anchors)  # output [rpn classification, rpn regression]
-
-classifier = classifier_layer(shared_layers, roi_input, C.num_rois, nb_classes=2)
-
-model_rpn = Model(cnn_input, rpn[:2])  # (input,outoput)
-model_classifier = Model([cnn_input, roi_input], classifier)
+classifier = classifier_layer(shared_layers, roi_input, C.num_rois, nb_classes=len(classes_count)) #bitl3 output mn a5er layer
+#################fe 3 models hna
+model_rpn = Model(img_input, rpn[:2])### (input,outoput)
+model_classifier = Model([img_input, roi_input], classifier)
 
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
-model_all = Model([cnn_input, roi_input], rpn[:2] + classifier)
+#leh 3mlna model_all
+model_all = Model([img_input, roi_input], rpn[:2] + classifier)
 
+# Because the google colab can only run the session several hours one time (then you need to connect again),
+# we need to save the model and load the model to continue training
 if not os.path.isfile(C.model_path):
-
+    # If this is the begin of the training, load the pre-traind base network such as vgg-16
     try:
         print('This is the first time of your training')
         print('loading weights from {}'.format(C.base_net_weights))
@@ -93,21 +134,21 @@ else:
     print('Already train %dK batches' % (len(record_df)))
 
 optimizer = Adam(lr=1e-5)
-optimizer_classifier = Adam(lr=1e-5)
+optimizer_classifier = Adam(lr=1e-5) ####talma al 2 optimizer nfs al lr leh m3mlhom4 wa7ed bs fel .compile
 model_rpn.compile(optimizer=optimizer, loss=[rpn_loss_cls(num_anchors), rpn_loss_regr(num_anchors)])
+#######al parameters eh?
+model_classifier.compile(optimizer=optimizer_classifier, loss=[class_loss_cls, class_loss_regr(len(classes_count) - 1)],
+                         metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
 
-model_classifier.compile(optimizer=optimizer_classifier, loss=[class_loss_cls, class_loss_regr(1)],
-                         metrics={'dense_class_{}'.format(2): 'accuracy'})
-
-model_all.compile(optimizer='sgd', loss='mae')
+model_all.compile(optimizer='sgd', loss='mae')###al compile de m4 fahemha
 
 # Training setting
 total_epochs = len(record_df)
 r_epochs = len(record_df)
 
-epoch_length = 1000
-num_epochs = 3
-iter_num = 0  # counter
+epoch_length = 220
+num_epochs = 3                     ###3dd alepochs ali hm4i biha 3la alswr kolha y3ni epochs =2 w 3ndi 100 sora yob2a hm4i 200 mrra
+iter_num = 0 #counter
 
 total_epochs += num_epochs
 
@@ -136,8 +177,7 @@ for epoch_num in range(num_epochs):
             if len(rpn_accuracy_rpn_monitor) == epoch_length and C.verbose:
                 mean_overlapping_bboxes = float(sum(rpn_accuracy_rpn_monitor)) / len(rpn_accuracy_rpn_monitor)
                 rpn_accuracy_rpn_monitor = []
-                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(
-                    mean_overlapping_bboxes, epoch_length))
+                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(mean_overlapping_bboxes, epoch_length))
                 if mean_overlapping_bboxes == 0:
                     print(
                         'RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
@@ -146,34 +186,33 @@ for epoch_num in range(num_epochs):
             X, Y, img_data, debug_img, debug_num_pos = next(data_gen_train)
 
             # Train rpn model and get loss value [_, loss_rpn_cls, loss_rpn_regr]
-            loss_rpn = model_rpn.train_on_batch(X, Y)  # bi3ml model(X,rpn_cls) and (X,rpn_regr)
+            loss_rpn = model_rpn.train_on_batch(X, Y) #bi3ml model(X,rpn_cls) and (X,rpn_regr)
 
             # Get predicted rpn from rpn model [rpn_cls, rpn_regr]
             P_rpn = model_rpn.predict_on_batch(X)
 
             # R: bboxes (shape=(300,4))
             # Convert rpn layer to roi bboxes
-
+            #############
             R = rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_data_format(), use_regr=True, overlap_thresh=0.7,
-                           max_boxes=300)  # ttttakes the predicted 4050 box and decrease them to the 300 boxes with the highest confidence
+                           max_boxes=300) # ttttakes the predicted 4050 box and decrease them to the 300 boxes with the highest confidence
 
             # note: calc_iou converts from (x1,y1,x2,y2) to (x,y,w,h) format
             # X2: bboxes that iou > C.classifier_min_overlap for all gt bboxes in 300 non_max_suppression bboxes
             # Y1: one hot code for bboxes from above => x_roi (X)
             # Y2: corresponding labels and corresponding gt bboxes
-            X2, Y1, Y2, IouS = calc_iou(R, img_data, C, class_mapping)  # Y1 (no. boxes ,no of classes) altrue
-            # Y2 (x,y,w,h)
-            # X2 predicted location from rpn
-            # X2 predicted location from rpn
+            X2, Y1, Y2, IouS = calc_iou(R, img_data, C, class_mapping) # Y1 (no. boxes ,no of classes) altrue
+                                                                        #Y2 (x,y,w,h)
+                                                                        #X2 predicted location from rpn
             # If X2 is None means there are no matching bboxes
             if X2 is None:
-                rpn_accuracy_rpn_monitor.append(0)  ########bi3ml eh
+                rpn_accuracy_rpn_monitor.append(0)########bi3ml eh
                 rpn_accuracy_for_epoch.append(0)
                 continue
 
             # Find out the positive anchors and negative anchors
-            neg_samples = np.where(Y1[0, :, -1] == 1)  ###negative samples y3ni background
-            pos_samples = np.where(Y1[0, :, -1] == 0)  ### positive samples y3ni object
+            neg_samples = np.where(Y1[0, :, -1] == 1) ###negative samples y3ni background
+            pos_samples = np.where(Y1[0, :, -1] == 0) ### positive samples y3ni object
 
             if len(neg_samples) > 0:
                 neg_samples = neg_samples[0]
@@ -228,7 +267,7 @@ for epoch_num in range(num_epochs):
 
             losses[iter_num, 2] = loss_class[1]
             losses[iter_num, 3] = loss_class[2]
-            losses[iter_num, 4] = loss_class[3]  ##sum(all_losses)
+            losses[iter_num, 4] = loss_class[3] ##sum(all_losses)
 
             iter_num += 1
 
@@ -288,4 +327,4 @@ for epoch_num in range(num_epochs):
             print('Exception: {}'.format(e))
             continue
 
-    print('Training complete, exiting.')
+print('Training complete, exiting.')

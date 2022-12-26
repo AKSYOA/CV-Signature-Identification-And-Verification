@@ -1,20 +1,18 @@
 import os
 import cv2
 import numpy as np
+import csv
 
 data_path = 'SignatureObjectDetection/'
 
 
-def get_dataset(image_size=150):
+def get_data_csvfile():
     train_path, train_dimensions_path, test_path, test_dimensions_path = get_images_paths()
-    train_images = read_images(train_path, image_size)
-    test_images = read_images(test_path, image_size)
-    train_boxes  = get_boxes_dimensions(train_dimensions_path)
-    test_boxes = get_boxes_dimensions(test_dimensions_path)
-    # print(len(test_images))
-    # print(len(test_boxes))
-    return train_images, train_boxes, test_images ,test_boxes
 
+    make_data_as_csv(train_dimensions_path[0],'train')
+    make_data_as_csv(test_dimensions_path[0],'test')
+
+    return train_path[0][0],test_path[0][0]
 
 def get_images_paths():
     train_path = []
@@ -25,7 +23,7 @@ def get_images_paths():
     for i in os.listdir(data_path):
         if i == 'TrainImages':
             for img in os.listdir(os.path.join(data_path, i)):
-                train_path.append([os.path.join(data_path, i), img]) #(link ,img_name)
+                train_path.append([os.path.join(data_path, i), img])  # (link ,img_name)
         elif i == "TestImages":
             for img in os.listdir(os.path.join(data_path, i)):
                 test_path.append([os.path.join(data_path, i), img])
@@ -36,32 +34,21 @@ def get_images_paths():
     return train_path, train_dimensions_path, test_path, test_dimensions_path
 
 
-def read_images(images_paths, image_size):
-    images = []
 
-    for i in range(len(images_paths)):
-        image = cv2.imread(os.path.join(images_paths[i][0], images_paths[i][1]), 0)
-        image = resize_image(image, image_size)
-        # cv2.imshow('Filtered_img', image)
-        # cv2.waitKey(0)
+def make_data_as_csv(path, mode):
+    if (mode == 'train'):
+        file_name = 'train_data.csv'
+    elif mode == 'test':
+        file_name = 'test_data.csv'
 
-        images.append([images_paths[i][1], np.array(image)])
+    with open(file_name, 'w', newline='') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=',',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for img_name_txt in os.listdir(path):
+            text_file = open(os.path.join(path, img_name_txt), "r")
+            Lines = text_file.readlines()
+            for j in Lines:
+                line_split = j.strip().split(',')
+                img = img_name_txt[:-3] + 'tif'
+                spamwriter.writerow([img, 'Signature', line_split[0], line_split[1], line_split[2], line_split[3]])
 
-    return images
-
-
-def resize_image(image, image_size):
-    return cv2.resize(image, (image_size, 2 * image_size))
-
-
-def get_boxes_dimensions(path):
-    dimension_images = []
-    for i in os.listdir(path[0]):
-        text_file = open(os.path.join(path[0], i), "r")
-        Lines = text_file.readlines()
-        dimension_boxes = []
-        for j in Lines:
-            # print(i, " ", j)
-            dimension_boxes.append(j)
-        dimension_images.append(dimension_boxes)
-    return dimension_images
