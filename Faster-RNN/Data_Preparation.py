@@ -9,28 +9,21 @@ data_path = 'SignatureObjectDetection/'
 def get_data_csvfile():
     train_path, train_dimensions_path, test_path, test_dimensions_path = get_images_paths()
 
-    make_data_as_csv(train_dimensions_path[0],'train')
-    make_data_as_csv(test_dimensions_path[0],'test')
+    make_data_as_csv(train_dimensions_path,'train')
+    make_data_as_csv(test_dimensions_path,'test')
 
-    return train_path[0][0],test_path[0][0]
+    return train_path,test_path
 
 def get_images_paths():
-    train_path = []
-    test_path = []
-    train_dimensions_path = []
-    test_dimensions_path = []
-
     for i in os.listdir(data_path):
         if i == 'TrainImages':
-            for img in os.listdir(os.path.join(data_path, i)):
-                train_path.append([os.path.join(data_path, i), img])  # (link ,img_name)
+                train_path= os.path.join(data_path, i)
         elif i == "TestImages":
-            for img in os.listdir(os.path.join(data_path, i)):
-                test_path.append([os.path.join(data_path, i), img])
+                test_path= os.path.join(data_path, i)
         elif i == "TrainGroundTruth":
-            train_dimensions_path.append(os.path.join(data_path, i))
+            train_dimensions_path= os.path.join(data_path, i)
         elif i == "TestGroundTruth":
-            test_dimensions_path.append(os.path.join(data_path, i))
+            test_dimensions_path= os.path.join(data_path, i)
     return train_path, train_dimensions_path, test_path, test_dimensions_path
 
 
