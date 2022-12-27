@@ -1,12 +1,11 @@
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import Data_Preparation
 import BOW_utilities
 import os
+import matplotlib.pyplot as plt
 from joblib import dump, load
 
-
 train_images, test_images = Data_Preparation.get_dataset()
-
 
 Classes = ['personA', 'personB', 'personC', 'personD', 'personE']
 
@@ -34,3 +33,10 @@ for i in range(5):
     predictions = BOW_utilities.test_model(test, model, k_means_object, n_clusters)
 
     print("Testing Accuracy: " + str(accuracy_score(Y_test, predictions)))
+
+    matrix = confusion_matrix(Y_test, predictions)
+
+    disp = ConfusionMatrixDisplay(confusion_matrix=matrix)
+    disp.plot()
+    plt.title(Classes[i])
+    plt.show()
