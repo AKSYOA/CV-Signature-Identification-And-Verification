@@ -32,14 +32,14 @@ def get_triplet(data):
                 label_anchor = image[1]
                 name = image[2]
 
-        for pos in data:
-            if pos[2].__contains__(Class) and label_anchor == pos[1] and name != pos[2]:
-                positive = pos
-                for neg in data:
-                    if neg[2].__contains__(Class) and label_anchor != neg[1]:
-                        negative = neg
-                        triplets.append([anchor, positive, negative])
-                        shuffle(triplets)
+                for pos in data:
+                    if pos[2].__contains__(Class) and label_anchor == pos[1] and name != pos[2]:
+                        positive = pos
+                        for neg in data:
+                            if neg[2].__contains__(Class) and label_anchor != neg[1]:
+                                negative = neg
+                                triplets.append([anchor, positive, negative])
+    shuffle(triplets)
     return triplets
 
 

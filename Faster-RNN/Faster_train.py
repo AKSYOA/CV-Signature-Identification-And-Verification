@@ -17,15 +17,15 @@ horizontal_flips = True  # Augment with horizontal flips in training.
 vertical_flips = True  # Augment with vertical flips in training.
 rot_90 = True  # Augment with 90 degree rotations in training.
 
-output_weight_path = 'model_frcnn_vgg.hdf5'#save model weights
+output_weight_path = '../../model_frcnn_vgg.hdf5'#save model weights
 
 # Record data (used to save the losses, classification accuracy and mean average precision)
 record_path = 'record.csv'
 
 # pre-trained VGG weights for the feature map network
-base_weight_path = 'vgg16_weights.h5'
+base_weight_path = '../../vgg16_weights.h5'
 
-config_output_filename = 'model_vgg_config.pickle'#save the cofigurartion values
+config_output_filename = '../../model_vgg_config.pickle'#save the cofigurartion values
 
 # Create the config
 C = Config() #####3bara 3n eh
@@ -146,7 +146,7 @@ model_all.compile(optimizer='sgd', loss='mae')###al compile de m4 fahemha
 total_epochs = len(record_df)
 r_epochs = len(record_df)
 
-epoch_length = 220
+epoch_length = 100
 num_epochs = 3                     ###3dd alepochs ali hm4i biha 3la alswr kolha y3ni epochs =2 w 3ndi 100 sora yob2a hm4i 200 mrra
 iter_num = 0 #counter
 

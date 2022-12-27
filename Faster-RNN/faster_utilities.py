@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 import warnings
 
+from keras.engine.base_layer import Layer
+
 warnings.filterwarnings("ignore")
 
 import random
@@ -16,21 +18,20 @@ import math
 import cv2
 import copy
 from matplotlib import pyplot as plt
-
+import os
 # from sklearn.metrics import average_precision_score
 import keras
 import tensorflow as tf
 from keras import backend as K
-from keras.optimizers import Adam, SGD, RMSprop
+from tensorflow.keras.optimizers import Adam
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, Dropout
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D, TimeDistributed
 from keras.utils import layer_utils
 from keras.utils.data_utils import get_file
-from keras.objectives import categorical_crossentropy
+from keras.losses import categorical_crossentropy
 
 from keras.models import Model
 from keras.utils import generic_utils
-from keras.engine import Layer, InputSpec
 from keras import initializers, regularizers
 
 
@@ -905,9 +906,13 @@ def class_loss_regr(num_classes):
     """
 
     def class_loss_regr_fixed_num(y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+
         x = y_true[:, :, 4 * num_classes:] - y_pred
+        print(type(x))
         x_abs = K.abs(x)
-        x_bool = K.cast(K.less_equal(x_abs, 1.0), 'float32')
+        x_bool = K.cast(K.less_equal(x_abs, 1.0), tf.float32)
         return lambda_cls_regr * K.sum(
             y_true[:, :, :4 * num_classes] * (x_bool * (0.5 * x * x) + (1 - x_bool) * (x_abs - 0.5))) / K.sum(
             epsilon + y_true[:, :, :4 * num_classes])

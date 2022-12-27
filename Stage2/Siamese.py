@@ -7,6 +7,8 @@ train_images, test_images = Data_Preparation.get_dataset()
 train_triplets = get_triplet(train_images)
 test_triplets = get_triplet(test_images)
 
+print(len(train_triplets))
+print(len(test_triplets))
 siamese_model = generate_Siamese_model()
 
 encoder = get_encoder((128, 128, 3))

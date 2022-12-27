@@ -5,9 +5,11 @@ import os
 from matplotlib import pyplot as plt
 import pandas as pd
 from faster_utilities import *
-from Faster_train import test_link
+from Data_Preparation import get_data_csvfile
 
-config_output_filename = 'model_vgg_config.pickle'
+train_link, test_link = get_data_csvfile()
+
+config_output_filename = '../../model_vgg_config.pickle'
 with open(config_output_filename, 'rb') as f_in:
     C = pickle.load(f_in)
 
@@ -134,8 +136,8 @@ model_classifier_only = Model([feature_map_input, roi_input], classifier)
 model_classifier = Model([feature_map_input, roi_input], classifier)
 
 print('Loading weights from {}'.format(C.model_path))
-model_rpn.load_weights(C.model_path, by_name=True)
-model_classifier.load_weights(C.model_path, by_name=True)
+model_rpn.load_weights("../../"+C.model_path, by_name=True)
+model_classifier.load_weights("../../"+C.model_path, by_name=True)
 
 model_rpn.compile(optimizer='sgd', loss='mse')
 model_classifier.compile(optimizer='sgd', loss='mse')
@@ -157,12 +159,10 @@ all_imgs = []
 classes = {}
 
 # If the box classification value is less than this, we ignore this box
-bbox_threshold = 0.9
-
+bbox_threshold = 0.7
 for idx, img_name in enumerate(imgs_path):
     if not img_name.lower().endswith(('.bmp', '.jpeg', '.jpg', '.png', '.tif', '.tiff')):
         continue
-    print(img_name)
     st = time.time()
     filepath = test_link + '/' + img_name
 
@@ -229,7 +229,7 @@ for idx, img_name in enumerate(imgs_path):
     for key in bboxes:
         bbox = np.array(bboxes[key])
 
-        new_boxes, new_probs = non_max_suppression_fast(bbox, np.array(probs[key]), overlap_thresh=0.5)
+        new_boxes, new_probs = non_max_suppression_fast(bbox, np.array(probs[key]), overlap_thresh=0.7)
         for jk in range(new_boxes.shape[0]):
             (x1, y1, x2, y2) = new_boxes[jk, :]
 
